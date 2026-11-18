@@ -102,6 +102,10 @@ def unique_keys(pairs: list[tuple]) -> dict:
     return result
 
 
+def reject_json_constant(value: str):
+    raise ValueError("Niet-standaard JSON-constanten zijn niet toegestaan.")
+
+
 def metadata_version(section: object) -> str | None:
     """Expliciet null betekent onbekend; ontbrekende of ongeldige waarden niet."""
     if not isinstance(section, dict) or "version" not in section:
@@ -160,7 +164,8 @@ def read_project_data(directory: Path) -> dict | None:
         return None
     # Windows PowerShell 5.1 kan UTF-8 met BOM schrijven. Verwijder alleen een
     # eventuele begin-BOM; alle overige JSON- en inhoudscontroles blijven gelden.
-    data = json.loads(raw.decode("utf-8-sig"), object_pairs_hook=unique_keys)
+    data = json.loads(raw.decode("utf-8-sig"), object_pairs_hook=unique_keys,
+                      parse_constant=reject_json_constant)
     if not isinstance(data, dict) or type(data.get("schema_version")) is not int or data["schema_version"] != 1:
         raise ValueError("Niet-ondersteunde metadataversie; verwacht schema_version 1.")
     return data
@@ -180,13 +185,24 @@ def read_project(directory: Path) -> Project | None:
     return Project(name, kind, studio_version, template_version, directory)
 
 
-def project_directories(root: Path):
+def project_directories(root: Path, *, max_entries: int | None = None):
     """Gedeelde directe scan; lever onveilige/onleesbare paden als waarschuwing."""
     root = Path(os.path.abspath(root.expanduser()))
     reject_links(root)
     if not root.is_dir():
         raise NotADirectoryError("De projectroot moet een bestaande map zijn.")
-    for directory in sorted(root.iterdir(), key=lambda path: path.name.casefold()):
+    if max_entries is None:
+        directories = sorted(root.iterdir(), key=lambda path: path.name.casefold())
+    else:
+        # Stop vóór sorteren/materialiseren van een onbeperkt grote map.
+        directories = []
+        with os.scandir(root) as entries:
+            for entry in entries:
+                if len(directories) >= max_entries:
+                    raise ValueError("Te veel items in de projectroot.")
+                directories.append(Path(entry.path))
+        directories.sort(key=lambda path: path.name.casefold())
+    for directory in directories:
         try:
             info = directory.lstat()
             if is_link(info):
@@ -243,7 +259,8 @@ def version_state(section: object) -> tuple[str, str]:
 
 def update_catalog() -> dict[str, dict]:
     """Lees het lokale manifest eenmaal; ongeldige entries blokkeren geen andere types."""
-    data = json.loads(read_bytes_file(MANIFEST_PATH).decode("utf-8-sig"), object_pairs_hook=unique_keys)
+    data = json.loads(read_bytes_file(MANIFEST_PATH).decode("utf-8-sig"), object_pairs_hook=unique_keys,
+                      parse_constant=reject_json_constant)
     if (not isinstance(data, dict) or type(data.get("schema_version")) is not int
             or data["schema_version"] != 1 or not isinstance(data.get("templates"), dict)):
         raise ValueError("Ongeldig of niet-ondersteund manifestschema.")
@@ -361,7 +378,8 @@ def safe_relative_path(value: object) -> Path:
 
 
 def template_spec(kind: str) -> dict:
-    manifest = json.loads(read_bytes_file(MANIFEST_PATH).decode("utf-8-sig"), object_pairs_hook=unique_keys)
+    manifest = json.loads(read_bytes_file(MANIFEST_PATH).decode("utf-8-sig"), object_pairs_hook=unique_keys,
+                          parse_constant=reject_json_constant)
     if (not isinstance(manifest, dict) or type(manifest.get("schema_version")) is not int
             or manifest["schema_version"] != 1):
         raise ValueError("Onbekende manifestversie.")
@@ -623,12 +641,23 @@ def main(argv: list[str] | None = None) -> int:
     listing.add_argument("--root", type=Path, default=None, help="Projectroot (standaard: ~/Projects)")
     updates = commands.add_parser("updates", help="Vergelijk project-templateversies met het lokale manifest")
     updates.add_argument("--root", type=Path, default=None, help="Projectroot (standaard: ~/Projects)")
+    dashboard = commands.add_parser("dashboard", help="Start het lokale alleen-lezen browserdashboard")
+    dashboard.add_argument("--root", type=Path, default=None, help="Projectroot (standaard: ~/Projects)")
     checking = commands.add_parser("check", help="Controleer metadata, templateconfiguratie en Git-status")
     checking.add_argument("project", help="Directe projectmapnaam onder de root")
     checking.add_argument("--root", type=Path, default=None, help="Projectroot (standaard: ~/Projects)")
     checking.add_argument("--run-tests", action="store_true", help="Vraag bevestiging voor een toegestane testopdracht")
     args = parser.parse_args(argv)
     root = Path.home() / "Projects" if args.root is None else args.root
+    if args.command == "dashboard":
+        # Geen bytecodebestand schrijven bij het laden van het lokale dashboard.
+        previous = sys.dont_write_bytecode
+        try:
+            sys.dont_write_bytecode = True
+            from dashboard import serve
+            return serve(root)
+        finally:
+            sys.dont_write_bytecode = previous
     if args.command == "updates":
         try:
             results, warnings, missing = project_updates(root)
