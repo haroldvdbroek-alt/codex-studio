@@ -1,0 +1,9 @@
+[project]
+name = "PROJECT_NAME"
+version = "0.1.0"
+description = "Een offline Python-startpunt voor toekomstige AI-functionaliteit."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+# Alleen metadata; rechtstreeks testen en uitvoeren, zonder package-installatie.
