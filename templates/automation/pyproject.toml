@@ -1,0 +1,9 @@
+[project]
+name = "PROJECT_NAME"
+version = "0.1.0"
+description = "Veilige handmatige bestandsverwerking met dry-run."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+# Alleen metadata; geen installatie of build nodig.

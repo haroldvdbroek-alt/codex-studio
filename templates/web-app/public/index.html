@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Een kleine webapp zonder frameworks.">
+  <title>PROJECT_NAME</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <main class="card">
+    <p class="eyebrow">Mijn eerste webapp</p>
+    <h1>PROJECT_NAME</h1>
+    <p>Een klein begin. Klik, probeer en bouw verder.</p>
+    <section aria-labelledby="counter-heading">
+      <h2 id="counter-heading">Klikteller</h2>
+      <p class="count" role="status" aria-live="polite" aria-atomic="true">
+        Aantal klikken: <span id="count">0</span>
+      </p>
+      <div class="actions">
+        <button id="increment" type="button">Tel er één bij</button>
+        <button id="reset" type="button" class="secondary">Begin opnieuw</button>
+      </div>
+    </section>
+    <p class="hint">De teller wordt niet opgeslagen. Vernieuwen begint bij nul.</p>
+    <noscript>Schakel JavaScript in om de teller te gebruiken.</noscript>
+  </main>
+</body>
+</html>

@@ -2,7 +2,15 @@
 
 Codex Development Studio is een herbruikbare werkmap met afspraken voor samenwerken met Codex aan software. De afspraken zijn bruikbaar voor verschillende programmeertalen en soorten projecten.
 
-Deze studio bevat ontwikkelafspraken, een Python-template en een generator voor nieuwe projecten. De generator gebruikt alleen de Python-standaardbibliotheek. Je hebt Python 3.11 of hoger nodig, maar hoeft geen pakketten te installeren.
+Deze studio bevat ontwikkelafspraken, templates voor Python, web, offline AI en bestandsautomatisering, en een generator voor nieuwe projecten. De generator gebruikt alleen de Python-standaardbibliotheek. Je hebt Python 3.11 of hoger nodig, maar hoeft geen pakketten te installeren. Voor JavaScript-tests gebruik je daarnaast Node.js 22 of hoger.
+
+## Documentatie
+
+- [Beginnen op Windows met VS Code en PowerShell](docs/GETTING_STARTED.md)
+- [Dagelijkse workflow, tests, Git en GitHub](docs/WORKFLOW.md)
+- [Veiligheid, secrets en persoonlijke gegevens](docs/SECURITY.md)
+- [Beschikbare en geplande templates](docs/TEMPLATES.md)
+- [Problemen oplossen en bekende beperkingen](docs/TROUBLESHOOTING.md)
 
 ## Wat staat waar?
 
@@ -10,14 +18,14 @@ Deze studio bevat ontwikkelafspraken, een Python-template en een generator voor 
 | --- | --- |
 | `AGENTS.md` | Instructies voor Codex bij het onderzoeken, wijzigen en controleren van projecten. |
 | `README.md` | Deze uitleg voor jou als gebruiker. |
-| `docs/` | Ruimte voor toekomstige handleidingen en afspraken; momenteel leeg. |
-| `create_project.py` | Maakt een zelfstandig Python-project op basis van het template. |
+| `docs/` | Handleidingen voor beginnen, ontwikkelen, veiligheid, templates en problemen oplossen. |
+| `create_project.py` | Maakt een zelfstandig Python-, web- of AI-project op basis van een template. |
 | `tests/` | Automatische tests voor de generator. |
-| `templates/` | Startsjablonen; alleen het Python-template is al ingevuld. |
-| `templates/ai-app/` | Gereserveerd voor toepassingen met AI. |
-| `templates/automation/` | Gereserveerd voor automatiseringen. |
+| `templates/` | Werkende startsjablonen voor Python, web en offline AI-voorbereiding. |
+| `templates/ai-app/` | Python met omgevingsconfiguratie, lokale nepclient en offline tests; geen echte providerkoppeling. |
+| `templates/automation/` | Bestandsverwerking met dry-run, logging, tests en expliciete uitvoering via `--apply`. |
 | `templates/python-app/` | Werkend Python-template met src-layout, tests en GitHub Actions. |
-| `templates/web-app/` | Gereserveerd voor webtoepassingen. |
+| `templates/web-app/` | HTML, CSS en JavaScript zonder frameworks, met tests en GitHub Actions. |
 
 ## Hoe werk je met de studio?
 
@@ -35,11 +43,13 @@ Codex maakt alleen een commit of push als je daar uitdrukkelijk om vraagt. De pr
 Open een terminal in de hoofdmap van deze studio en voer uit:
 
 ```text
-python create_project.py mijn-notities --type python
+python .\create_project.py mijn-notities --type python --output "$HOME\Projects"
 ```
 
-Dit maakt `Projects/mijn-notities` onder je thuismap. De thuismap wordt bepaald
-met `Path.home()` (op veel systemen aangeduid als `$HOME`). De package heet
+Dit PowerShell-voorbeeld maakt `Projects/mijn-notities` onder je thuismap.
+Gebruik voorlopig altijd `--output`: de huidige code gebruikt zonder die optie
+`C:/App/Codex/Projects`, hoewel de ingebouwde helptekst `~/Projects` noemt.
+De package heet
 `mijn_notities`: koppeltekens worden underscores, zodat Python de naam kan importeren.
 
 Je kunt een andere bovenliggende map kiezen:
@@ -81,28 +91,105 @@ cd projecten/mijn-notities
 python -m unittest discover -s tests -v
 ```
 
-Dit voorbeeld gebruikt de uitvoermap `./projecten` van hierboven. Bij de
-standaarduitvoer ga je eerst naar `Projects/mijn-notities` in je thuismap.
+Dit voorbeeld gebruikt de uitvoermap `./projecten` van hierboven. Bij het eerste
+voorbeeld met `--output "$HOME\Projects"` ga je in PowerShell naar
+`Set-Location -LiteralPath "$HOME\Projects\mijn-notities"`.
 Lees de gegenereerde README voor het starten van de app. De meegeleverde workflow
 kan op GitHub testen zodra dit project de hoofdmap van een repository vormt;
 het uitvoeren van de generator publiceert niets.
 
-## De studio testen
+## Een webproject genereren
 
-Voer vanuit de studiohoofdmap de generator-tests uit:
+Vanuit de studiohoofdmap in PowerShell:
 
-```text
+```powershell
+python .\create_project.py mijn-website --type web --output "$HOME\Projects"
+Set-Location -LiteralPath "$HOME\Projects\mijn-website"
+node --test tests/counter.test.cjs
 python -m unittest discover -s tests -v
 ```
 
-De tests gebruiken tijdelijke mappen, controleren veiligheidsgevallen en testen
-ook een volledig gegenereerd project. Ze schrijven niet naar je echte
-`Projects`-map. Symlink-tests worden overgeslagen als het systeem geen koppelingen
-toestaat. Test daarna ook het oorspronkelijke template:
+Open daarna `public/index.html` in je browser, of start lokaal met
+`python -m http.server 8000 --bind 127.0.0.1 --directory public` en bezoek
+`http://127.0.0.1:8000`. Stop de server met Ctrl+C. Het project werkt zonder
+studio of pakketinstallaties. Dezelfde naamregels en uitvoermapbeperkingen gelden
+voor alle types. Zie [het webtemplate](templates/web-app/README.md) voor details.
+
+## Een AI-startproject genereren
+
+Vanuit de studiohoofdmap in PowerShell:
+
+```powershell
+python .\create_project.py mijn-ai-app --type ai --output "$HOME\Projects"
+Set-Location -LiteralPath "$HOME\Projects\mijn-ai-app"
+python -m unittest discover -s tests -v
+Push-Location .\src
+python -m mijn_ai_app
+Pop-Location
+```
+
+De app geeft een lokaal demoantwoord; er wordt geen AI-model of API aangeroepen.
+Omgevingsvariabelen bereiden een latere koppeling voor. `.env.example` bevat een
+lege sleutel en wordt niet automatisch ingelezen. De tests gebruiken uitsluitend
+fictieve configuratie en blokkeren netwerkverbindingen. Lees
+[het AI-template](templates/ai-app/README.md) voor configuratie en beperkingen.
+
+## Een automation-project genereren
+
+Vanuit de studiohoofdmap in PowerShell:
+
+```powershell
+python .\create_project.py mijn-taak --type automation --output "$HOME\Projects"
+Set-Location -LiteralPath "$HOME\Projects\mijn-taak"
+python -m unittest discover -s tests -v
+```
+
+De voorbeeldtaak verwerkt UTF-8 `.txt`-bestanden naar een nieuwe doelmap.
+Dry-run is standaard; alleen `--apply` schrijft. Bronbestanden blijven behouden
+en bestaande doelen worden geweigerd. Lees [de automation-handleiding](templates/automation/README.md)
+voor een veilige demo met fictieve gegevens. Er wordt geen planning of achtergrondtaak ingericht.
+
+## De studio testen
+
+De generator-tests controleren naamvalidatie, bestaande doelen, bestandsselectie
+en een gegenereerd project. Er is momenteel een bekende fout in de standaardmap:
+`test_default_output_uses_home_projects` kan buiten zijn tijdelijke testmap
+proberen te schrijven. Voer daarom niet blind de volledige suite uit.
+[Problemen oplossen](docs/TROUBLESHOOTING.md) bevat een uitvoerbare beperkte
+controle die deze ene test expliciet uitsluit. Symlink-tests kunnen worden
+overgeslagen als het systeem geen koppelingen toestaat.
+
+Test het oorspronkelijke template vanuit de studiohoofdmap met:
 
 ```text
-cd templates/python-app
+Push-Location .\templates\python-app
 python -m unittest discover -s tests -v
+Pop-Location
+```
+
+Controleer vanuit de studiohoofdmap ook het webtemplate:
+
+```powershell
+Push-Location .\templates\web-app
+node --test tests/counter.test.cjs
+python -m unittest discover -s tests -v
+Pop-Location
+```
+
+Controleer vanuit de studiohoofdmap ook het AI-template:
+
+```powershell
+Push-Location .\templates\ai-app
+python -m unittest discover -s tests -v
+Pop-Location
+```
+
+Controleer vanuit de studiohoofdmap ook het automation-template:
+
+```powershell
+Push-Location .\templates\automation
+python -m unittest discover -s tests -v
+Pop-Location
 ```
 
 ## Een eerste opdracht

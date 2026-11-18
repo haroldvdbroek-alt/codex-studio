@@ -1,4 +1,4 @@
-"""Genereer een Python-project zonder installaties of Git-opdrachten."""
+"""Genereer Python-, web-, AI- en automation-projecten zonder installaties of Git."""
 
 import argparse
 import keyword
@@ -22,6 +22,28 @@ TEMPLATE_FILES = (
     "src/project_package/__main__.py",
     "src/project_package/greeting.py",
     "tests/test_greeting.py",
+)
+WEB_TEMPLATE_DIR = Path(__file__).resolve().parent / "templates" / "web-app"
+WEB_TEMPLATE_FILES = (
+    "AGENTS.md", "README.md", ".gitignore",
+    ".github/workflows/web-tests.yml",
+    "public/index.html", "public/styles.css", "public/app.js",
+    "tests/counter.test.cjs", "tests/test_page.py",
+)
+AI_TEMPLATE_DIR = Path(__file__).resolve().parent / "templates" / "ai-app"
+AI_TEMPLATE_FILES = (
+    "AGENTS.md", "README.md", "pyproject.toml", ".gitignore", ".env.example",
+    ".github/workflows/ai-tests.yml",
+    "src/project_package/__init__.py", "src/project_package/__main__.py",
+    "src/project_package/config.py", "src/project_package/client.py",
+    "src/project_package/service.py", "tests/test_ai.py",
+)
+AUTOMATION_TEMPLATE_DIR = Path(__file__).resolve().parent / "templates" / "automation"
+AUTOMATION_TEMPLATE_FILES = (
+    "AGENTS.md", "README.md", "pyproject.toml", ".gitignore",
+    ".github/workflows/automation-tests.yml",
+    "src/project_package/__init__.py", "src/project_package/__main__.py",
+    "src/project_package/tasks.py", "tests/test_tasks.py",
 )
 RESERVED_NAMES = {"con", "prn", "aux", "nul", "clock$", "conin$", "conout$"} | {
     f"{prefix}{number}" for prefix in ("com", "lpt") for number in range(1, 10)
@@ -66,12 +88,24 @@ def reject_links(path: Path) -> None:
             raise ValueError(f"Symbolische koppelingen zijn niet toegestaan: {part}")
 
 
-def render_template(project_name: str, package_name: str) -> dict[Path, str]:
+def render_template(
+    project_name: str, package_name: str, *, project_type: str = "python"
+) -> dict[Path, str]:
     """Lees uitsluitend toegestane UTF-8-bestanden, vóór het doel wordt gemaakt."""
     rendered = {}
     replacements = {"PROJECT_NAME": project_name, "project_package": package_name}
-    for relative_name in TEMPLATE_FILES:
-        source = TEMPLATE_DIR / relative_name
+    if project_type == "python":
+        template_dir, files = TEMPLATE_DIR, TEMPLATE_FILES
+    elif project_type == "web":
+        template_dir, files = WEB_TEMPLATE_DIR, WEB_TEMPLATE_FILES
+    elif project_type == "ai":
+        template_dir, files = AI_TEMPLATE_DIR, AI_TEMPLATE_FILES
+    elif project_type == "automation":
+        template_dir, files = AUTOMATION_TEMPLATE_DIR, AUTOMATION_TEMPLATE_FILES
+    else:
+        raise ValueError("Onbekend projecttype; kies python, web, ai of automation.")
+    for relative_name in files:
+        source = template_dir / relative_name
         reject_links(source.absolute())
         if not source.is_file():
             raise ValueError(f"Verplicht templatebestand ontbreekt: {relative_name}")
@@ -87,7 +121,9 @@ def render_template(project_name: str, package_name: str) -> dict[Path, str]:
     return rendered
 
 
-def create_project(project_name: str, output: Path | str | None = None) -> Path:
+def create_project(
+    project_name: str, output: Path | str | None = None, *, project_type: str = "python"
+) -> Path:
     """Maak een nieuw project onder output (standaard ~/Projects).
 
     Een bestaand doel wordt nooit hergebruikt. Bij een schrijffout kan een
@@ -103,7 +139,12 @@ def create_project(project_name: str, output: Path | str | None = None) -> Path:
     # lexists detecteert ook een kapotte symbolische koppeling.
     if os.path.lexists(target):
         raise FileExistsError(f"De doelmap of het doelbestand bestaat al: {target}")
-    rendered = render_template(project_name, package_name)
+    # Behoud de bestaande Python-aanroep voor gebruikers van deze functie.
+    rendered = (
+        render_template(project_name, package_name)
+        if project_type == "python"
+        else render_template(project_name, package_name, project_type=project_type)
+    )
     parent.mkdir(parents=True, exist_ok=True)
     reject_links(parent)
     # Zonder exist_ok: ook als het doel inmiddels is aangemaakt, weigeren we het.
@@ -125,22 +166,24 @@ def create_project(project_name: str, output: Path | str | None = None) -> Path:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Maak een nieuw Python-project met alleen de standaardbibliotheek."
+        description="Maak een Python-, web-, AI- of automation-project zonder externe pakketten."
     )
     parser.add_argument("name", help="Projectnaam, bijvoorbeeld mijn-notities")
-    parser.add_argument("--type", required=True, choices=("python",), help="Projecttype")
+    parser.add_argument("--type", required=True, choices=("python", "web", "ai", "automation"), help="Projecttype")
     parser.add_argument(
         "--output", type=Path,
         help="Bovenliggende doelmap (standaard: ~/Projects); ~ wordt ondersteund",
     )
     args = parser.parse_args(argv)
     try:
-        target = create_project(args.name, args.output)
+        target = create_project(args.name, args.output, project_type=args.type)
     except (OSError, ValueError, UnicodeError) as error:
         print(f"Fout: {error}", file=sys.stderr)
         return 1
     print(f"Project aangemaakt: {target}")
     print("Ga naar deze map en voer uit: python -m unittest discover -s tests -v")
+    if args.type == "web":
+        print("Voer ook uit: node --test tests/counter.test.cjs")
     print("Git is niet geïnitialiseerd; er is geen GitHub-repository aangemaakt.")
     return 0
 
