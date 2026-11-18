@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "templates": {
+    "python": {
+      "label": "Python",
+      "directory": "python-app",
+      "version": "1.0.0",
+      "files": [
+        "AGENTS.md",
+        "README.md",
+        "pyproject.toml",
+        ".gitignore",
+        ".github/workflows/python-tests.yml",
+        "src/project_package/__init__.py",
+        "src/project_package/__main__.py",
+        "src/project_package/greeting.py",
+        "tests/test_greeting.py"
+      ]
+    },
+    "web": {
+      "label": "Web",
+      "directory": "web-app",
+      "version": "1.0.0",
+      "files": [
+        "AGENTS.md",
+        "README.md",
+        ".gitignore",
+        ".github/workflows/web-tests.yml",
+        "public/index.html",
+        "public/styles.css",
+        "public/app.js",
+        "tests/counter.test.cjs",
+        "tests/test_page.py"
+      ]
+    },
+    "ai": {
+      "label": "AI (offline demo)",
+      "directory": "ai-app",
+      "version": "1.0.0",
+      "files": [
+        "AGENTS.md",
+        "README.md",
+        "pyproject.toml",
+        ".gitignore",
+        ".env.example",
+        ".github/workflows/ai-tests.yml",
+        "src/project_package/__init__.py",
+        "src/project_package/__main__.py",
+        "src/project_package/config.py",
+        "src/project_package/client.py",
+        "src/project_package/service.py",
+        "tests/test_ai.py"
+      ]
+    },
+    "automation": {
+      "label": "Automation (dry-run)",
+      "directory": "automation",
+      "version": "1.0.0",
+      "files": [
+        "AGENTS.md",
+        "README.md",
+        "pyproject.toml",
+        ".gitignore",
+        ".github/workflows/automation-tests.yml",
+        "src/project_package/__init__.py",
+        "src/project_package/__main__.py",
+        "src/project_package/tasks.py",
+        "tests/test_tasks.py"
+      ]
+    }
+  }
+}

@@ -5,14 +5,14 @@
   },
   "generator": {
     "name": "Codex Development Studio",
-    "version": null
+    "version": "1.0.0"
   },
   "template": {
     "id": "python",
-    "version": null
+    "version": "1.0.0"
   },
   "registration": {
     "method": "manual",
-    "note": "Projecttype vastgesteld op basis van projectstructuur; oorspronkelijke studio- en templateversie onbekend. Deze registratie bewijst niet dat een template is gebruikt."
+    "note": "Projecttype vastgesteld op basis van projectstructuur; oorspronkelijke studio- en templateversie onbekend. Deze registratie bewijst niet dat een template is gebruikt. Op verzoek van de gebruiker zijn studio- en templateversie op 1.0.0 gezet als nieuw administratief startpunt; dit bevestigt geen oorspronkelijke versie of templatecompatibiliteit."
   }
 }

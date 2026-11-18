@@ -4,6 +4,29 @@ Codex Development Studio is een herbruikbare werkmap met afspraken voor samenwer
 
 Deze studio bevat ontwikkelafspraken, een Python-template en een generator voor nieuwe projecten. De generator gebruikt alleen de Python-standaardbibliotheek. Je hebt Python 3.11 of hoger nodig, maar hoeft geen pakketten te installeren.
 
+## Lokaal browserdashboard
+
+Start vanuit deze hoofdmap in PowerShell:
+
+```powershell
+python studio.py dashboard --root "C:\App\Codex\Projects"
+```
+
+Zonder `--root` wordt `$HOME\Projects` gebruikt. Open het getoonde
+`http://127.0.0.1:poort/`-adres in je browser. Stop de server met `Ctrl+C` in
+PowerShell; opruimen kan circa 17 seconden duren.
+
+Het dashboard toont projecten, templateversies, update-status en configuratie-
+en Git-status. Tests staan op `NIET_UITGEVOERD`: er worden geen projecttests
+of installaties gestart. De achtergrondcontrole gebruikt alleen-lezen
+controles en vaste Git-opdrachten. De browser kan uitsluitend het laatste
+overzicht ophalen en kan geen opdrachten uitvoeren of projectbestanden wijzigen.
+Er zijn geen externe pakketten, CDN's of externe browserverzoeken nodig.
+
+Lees [veilig gebruik en beperkingen](docs/SECURITY.md) voor routes,
+beveiligingsheaders, scanlimieten en uitleg van de statussen. Dit dashboard is
+bedoeld voor lokaal gebruik en mag niet via een tunnel of proxy worden gedeeld.
+
 ## Projecten bekijken
 
 Gebruik vanuit de studiohoofdmap:
@@ -54,7 +77,134 @@ hernoemd, toegevoegd of gemigreerd in bestaande projecten. Alleen-lezen betekent
 hier geen inhouds- of configuratiewijzigingen; het besturingssysteem kan bij lezen
 wel toegangstijden bijwerken. `-B` voorkomt Python-importcachebestanden.
 
-Test het nieuwe commando met `python -B -m unittest discover -s tests -p test_studio.py -v`.
+Test het lijstcommando met `python -B -m unittest discover -s tests -p test_studio.py -v`.
+
+## Een project controleren
+
+```powershell
+python -B .\studio.py check mijn-project
+python -B .\studio.py check mijn-project --root "C:\App\Codex\Projects"
+```
+
+De standaardroot is ook hier `$HOME\Projects`. `PROJECT` is de directe mapnaam,
+niet een willekeurig pad. Gebruik `--root` voor een andere bovenliggende map.
+Padnavigatie, absolute projectpaden, Windows-apparaatnamen en alternatieve
+datastromen worden geweigerd. Koppelingen en junctions worden niet gevolgd,
+ook niet wanneer ze naar een andere projectmap verwijzen.
+
+Iedere controle toont een status:
+
+| Status | Betekenis |
+| --- | --- |
+| PASS | De genoemde controle slaagde; dit is geen algemene veiligheidsgarantie. |
+| WARN | Er is een aandachtspunt, bijvoorbeeld onbekende versies, wijzigingen of geen eigen Git-repository. |
+| FAIL | De controle mislukte of een pad/configuratie is onveilig of onvolledig. |
+| SKIP | Een controle is niet uitgevoerd, bijvoorbeeld tests zonder expliciet verzoek. |
+
+De samenvatting telt de statussen. Exitcode 1 betekent minimaal een FAIL; alleen
+waarschuwingen of bewust overgeslagen tests geven 0. Ongeldige CLI-argumenten
+geven 2. Ctrl+C tijdens de gewone controle geeft 130.
+
+De standaardcontrole voert geen projectcode uit en maakt of wijzigt geen
+projectbestanden. Ze leest `.codex-studio.json`, de lokale templatebeschrijving
+en bij Python/AI/automation de begrensde `pyproject.toml` om TOML en de projectnaam
+te controleren. Ze controleert de aanwezigheid en veilige paden van README,
+AGENTS.md, `.gitignore`, workflow- en testbestanden uit het manifest. Bij AI wordt
+alleen de aanwezigheid van `.env.example` gecontroleerd; echte `.env`-bestanden
+worden niet geopend. Python-code en YAML-workflows worden niet uitgevoerd of
+inhoudelijk als programma gevalideerd.
+
+`templates/manifest.json` is voor deze opdracht hersteld uit de eerdere
+studioversie. De bestaande generator op deze branch is daarbij niet gewijzigd.
+Een onbekende project-templateversie geeft een WARN: de bestandscontrole gebruikt
+dan alleen de huidige basiseisen. Bestaande metadata wordt nooit aangepast.
+
+Git wordt uitsluitend gebruikt voor lokale sleutelnamen zonder includes,
+`rev-parse --show-toplevel` en `status --porcelain=v1`, met vaste argumenten,
+`shell=False` en een limiet van 10 seconden per opdracht. Optionele indexwrites,
+fsmonitor, hooks, clean/process-filters en submoduleonderzoek worden uitgeschakeld.
+Externe configuratie-includes, worktree-verwijzingen en een ontbrekende Git-tool
+geven een WARN en geen verzonnen schone status. Onveilige Git-koppelingen of een
+onleesbare/onbetrouwbare repository geven FAIL. De opdracht verandert geen
+`safe.directory`-instellingen en maakt geen repository aan. Alleen `git.exe` of
+`git` uit absolute PATH-mappen buiten de projectroot wordt als hulpmiddel gebruikt;
+geen lokaal `git.cmd` of gelijknamig programma uit het project.
+
+Ook tekstverwijzingen in `.git` worden gecontroleerd. `commondir`, `gitdir`,
+`config.worktree`, `objects/info/alternates` en `objects/info/http-alternates`
+geven FAIL vóór de eerste Git-opdracht. Ze worden conservatief ook geweigerd
+als ze intern zouden verwijzen; deze constructies worden nog niet ondersteund.
+Zo kan Git geen externe administratie of objectmap openen via een gewoon tekstbestand.
+
+## Optioneel projecttests uitvoeren
+
+```powershell
+python -B .\studio.py check mijn-project --root "C:\App\Codex\Projects" --run-tests
+```
+
+**Let op: tests voeren projectcode uit en kunnen bestanden wijzigen, netwerkverkeer
+starten of andere processen aanmaken. Dit is geen sandbox.** Vertrouw het project
+zelf voordat je instemt: metadata met een bekend type is geen bewijs van veilige code.
+
+De opdracht doet eerst alle statische controles. Bij toegestane testuitvoering
+toont ze de werkmap, de waarschuwing en de testopdrachten; het volledige
+resultaatoverzicht volgt daarna. Alleen `ja` geeft toestemming. Enter, `nee`, `q`, Ctrl+C
+en einde invoer annuleren de bevestiging zonder een testproces te starten.
+Andere antwoorden starten evenmin tests. Een fout in de voorafgaande controles,
+onbekende templateversie of ontbrekende lokale testpolicy voorkomt testuitvoering.
+
+De lokale, vaste policy ondersteunt uitsluitend templateversie `1.0.0`:
+
+| Type | Toegestane opdrachten, vanuit de projectmap |
+| --- | --- |
+| Python, AI, automation | Huidige Python-interpreter met `-I -B -m unittest discover -s tests -v` |
+| Web | Dezelfde unittest-opdracht en de vertrouwde Node-executable met `--test tests/counter.test.cjs` |
+
+Er worden nooit opdrachten uit projectmetadata, scripts in `package.json` of
+workflowbestanden overgenomen. Geen pip- of npm-installaties. Node moet buiten
+de projectroot beschikbaar zijn via een rechtstreeks absoluut PATH-pad.
+Onbekende versies blijven SKIP; vul geen historische versies op goed geluk in
+om deze controle te omzeilen.
+
+Na bevestiging worden vóór iedere testopdracht metadata, lokale templateversie,
+testpolicy, executable, vereiste paden en projectkoppelingen opnieuw gecontroleerd.
+Een onleesbare submap wordt niet stilzwijgend overgeslagen: de controle stopt
+veilig. Een gewijzigde projectnaam, type, versie, executable of koppeling blokkeert
+starten. Als een eerdere opdracht al draaide, blijft het resultaat daarvan zichtbaar;
+de melding maakt duidelijk dat eerdere tests bestanden kunnen hebben gewijzigd.
+Iedere testopdracht heeft een limiet van 60 seconden; voor Git blijft dat 10 seconden.
+De gedeelde runner in `process_runner.py` bewaart per opdracht maximaal **1 MiB
+voor stdout en stderr samen**. Bij overschrijding volgt FAIL en stopt de procesboom.
+Er worden geen uitvoerbestanden in het project aangemaakt. De testprocessen geven
+PASS, FAIL of SKIP bij onderbreken; hun ruwe uitvoer wordt niet getoond om secrets
+en persoonsgegevens niet onbedoeld af te drukken. Voor gedetailleerde testuitvoer
+kun je de getoonde opdracht zelf in het vertrouwde project uitvoeren.
+Op Windows koppelt de runner eerst een geisoleerde Python-wrapper aan een
+anoniem Job Object. Pas na succesvolle koppeling mag de wrapper de opdracht
+starten. Bij mislukte koppeling start geen projectcode. Het Job Object staat geen
+gewone breakaway toe en wordt bij succes, time-out, uitvoeroverschrijding of
+annulering gesloten om ook achtergebleven kindprocessen te stoppen.
+Op POSIX gebruikt de runner hiervoor een eigen sessie/procesgroep.
+Zie de [Microsoft-uitleg over Job Objects](https://learn.microsoft.com/en-us/windows/win32/procthread/job-objects).
+
+De deadline omvat wachten op proces en uitvoerpijpen, zodat geerfde pijpen geen
+onbegrensde wachttijd meer veroorzaken. Opruimen krijgt maximaal 2 extra seconden;
+onvolledige opruiming wordt als fout gemeld. OS-procescreatie zelf is niet hard
+onderbreekbaar. Na een time-out, uitvoeroverschrijding of annulering worden geen
+volgende testopdrachten gestart.
+
+Dit is procesbeheer, geen beveiligingssandbox: code die via een externe dienst
+processen laat starten of op POSIX bewust de procesgroep verlaat, kan daarbuiten
+vallen. Bestandswijzigingen worden niet teruggedraaid. Gebruik vertrouwde mappen
+zonder gelijktijdige padwijzigingen; padcontroles en bestandstoegang blijven
+afzonderlijke stappen. De subprocessdeadline begrenst ook geen blokkerende
+bestandssysteemoproepen tijdens de voorafgaande padcontrole.
+
+Test de nieuwe controles met:
+
+```powershell
+python -B -m unittest discover -s tests -p "test_studio*.py" -v
+```
 
 ## Wat staat waar?
 
@@ -138,6 +288,56 @@ standaarduitvoer ga je eerst naar `Projects/mijn-notities` in je thuismap.
 Lees de gegenereerde README voor het starten van de app. De meegeleverde workflow
 kan op GitHub testen zodra dit project de hoofdmap van een repository vormt;
 het uitvoeren van de generator publiceert niets.
+
+## Lokale templateversies vergelijken
+
+Voer vanuit de studiohoofdmap uit:
+
+```powershell
+python -B studio.py updates
+python -B studio.py updates --root "C:\App\Codex\Projects"
+```
+
+Zonder `--root` zoekt de opdracht in `Projects` onder je Windows-gebruikersmap
+(`$HOME\Projects`). De tweede opdracht kiest expliciet een andere projectroot.
+`-B` voorkomt dat Python bij het starten bytecodebestanden aanmaakt.
+
+De opdracht bekijkt alleen directe projectmappen met `.codex-studio.json` en
+vergelijkt hun templateversie met `templates/manifest.json` in deze studio.
+Je ziet de projectnaam, het templatetype, de huidige versie, de lokale versie
+en een van deze resultaten:
+
+| Resultaat | Betekenis |
+| --- | --- |
+| `ACTUEEL` | Beide versies zijn gelijk. |
+| `NIEUW_BESCHIKBAAR` | Lokaal staat een hogere patch- of minorversie. |
+| `GROTE_WIJZIGING` | Lokaal staat een hoger majorversienummer; controleer mogelijke gevolgen voordat je handmatig bijwerkt. |
+| `PROJECT_LOOPT_VOOR` | Het project heeft een hogere versie dan het lokale manifest. |
+| `ONBEKEND` | Een betrouwbare vergelijking is niet mogelijk; lees de toelichting. |
+
+Versies moeten drie getallen bevatten, bijvoorbeeld `1.10.2`. De vergelijking
+is numeriek: `1.10.0` komt na `1.9.0`. Voorloopnullen, achtervoegsels zoals
+`-beta` en onvolledige versies worden als ongeldig gemeld. Een expliciete JSON-waarde
+`null` betekent **onbekend**; een afwezig versieveld betekent **ontbreekt**.
+Deze gevallen worden niet stilzwijgend vervangen door een verzonnen versie.
+Onbekende templatetypes en ongeldige metadata krijgen `ONBEKEND` met toelichting.
+Mappen zonder metadata worden overgeslagen en geteld; de scan zoekt niet verder
+in hun onderliggende mappen.
+
+Deze controle wijzigt geen projecten of metadata, installeert niets, start geen
+projectcode of Git en doet geen netwerkverzoeken. Het is een vergelijking met
+het lokale manifest, geen controle van online releases en geen automatische
+migratie. De aanwezigheid van een template in het manifest bewijst niet dat de
+bijbehorende templatebestanden aanwezig of compleet zijn; gebruik daarvoor
+`check`. Symlinks en Windows-junctions worden geweigerd, ook binnen de root.
+Gebruik een projectroot die je zelf beheert; gelijktijdige wijzigingen door
+andere processen zijn niet ondersteund.
+
+De afsluitcode is `0` bij een volledige controle, ook als een update beschikbaar
+is of een projectversie expliciet onbekend is. Ontbrekende of ongeldige vereiste
+gegevens, een onveilig pad of een onvolledige scan geven `1`. Annuleren met
+`Ctrl+C` tijdens de controle geeft `130`. In PowerShell kun je de afsluitcode
+bekijken met `$LASTEXITCODE`.
 
 ## De studio testen
 
