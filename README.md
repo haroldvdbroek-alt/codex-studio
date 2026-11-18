@@ -4,6 +4,39 @@ Codex Development Studio is een herbruikbare werkmap met afspraken voor samenwer
 
 Deze studio bevat ontwikkelafspraken, een Python-template en een generator voor nieuwe projecten. De generator gebruikt alleen de Python-standaardbibliotheek. Je hebt Python 3.11 of hoger nodig, maar hoeft geen pakketten te installeren.
 
+Begin met de [workflowhandleiding voor Windows](docs/WORKFLOW.md) en gebruik de
+[herbruikbare projectchecklist](docs/PROJECT_CHECKLIST.md) bij iedere taak.
+Beide behandelen Python, web, AI en automation en maken onderscheid tussen
+werkende functies en nog geplande templates.
+
+## Eerst een back-upoverzicht bekijken
+
+```powershell
+python -B .\studio.py backup mijn-project --root "C:\App\Codex\Projects"
+```
+
+Deze opdracht toont alleen de selectie en maakt niets aan. Alleen met
+`--create`, een opnieuw getoond overzicht en de exacte interactieve bevestiging
+`BACKUP mijn-project` wordt een lokale ZIP gemaakt. Gevoelige bestanden,
+gegevensmappen, Git-gegevens en tijdelijke bestanden worden standaard uitgesloten.
+De ZIP is niet versleuteld en is geen volledige gegevensback-up.
+Lees [back-ups maken](docs/BACKUPS.md) voor bestemming, selectie, limieten,
+annuleren en foutafhandeling.
+
+## Een back-up controleren en herstellen
+
+```powershell
+python -B .\studio.py restore "$HOME\StudioBackups\project.zip" --output "C:\App\Codex\Projects\project-herstel"
+```
+
+Gebruik de werkelijke archiefnaam. Zonder `--create` worden alleen structuur,
+bestandslijst, CRC en SHA-256 gecontroleerd en wordt het overzicht getoond.
+Herstel vereist `--create` plus de exacte interactieve bevestiging
+`HERSTEL project-herstel`. De doelmap mag nog niet bestaan, ook niet leeg.
+Er wordt geen projectcode uitgevoerd of iets geïnstalleerd.
+Lees de [herstelhandleiding](docs/RESTORE.md) voor beperkingen en onvolledig herstel.
+Controlesommen bewijzen geen herkomst; vertrouw de bron voordat je herstelde code start.
+
 ## Lokaal browserdashboard
 
 Start vanuit deze hoofdmap in PowerShell:
@@ -212,7 +245,7 @@ python -B -m unittest discover -s tests -p "test_studio*.py" -v
 | --- | --- |
 | `AGENTS.md` | Instructies voor Codex bij het onderzoeken, wijzigen en controleren van projecten. |
 | `README.md` | Deze uitleg voor jou als gebruiker. |
-| `docs/` | Ruimte voor toekomstige handleidingen en afspraken; momenteel leeg. |
+| `docs/` | Workflowhandleiding, herbruikbare projectchecklist en beveiligingsuitleg. |
 | `create_project.py` | Maakt een zelfstandig Python-project op basis van het template. |
 | `tests/` | Automatische tests voor de generator. |
 | `templates/` | Startsjablonen; alleen het Python-template is al ingevuld. |
@@ -240,8 +273,8 @@ Open een terminal in de hoofdmap van deze studio en voer uit:
 python create_project.py mijn-notities --type python
 ```
 
-Dit maakt `Projects/mijn-notities` onder je thuismap. De thuismap wordt bepaald
-met `Path.home()` (op veel systemen aangeduid als `$HOME`). De package heet
+Deze generator gebruikt op deze branch standaard `C:\App\Codex\Projects`.
+Gebruik `--output` om de bovenliggende map expliciet te kiezen. De package heet
 `mijn_notities`: koppeltekens worden underscores, zodat Python de naam kan importeren.
 
 Je kunt een andere bovenliggende map kiezen:
@@ -284,7 +317,7 @@ python -m unittest discover -s tests -v
 ```
 
 Dit voorbeeld gebruikt de uitvoermap `./projecten` van hierboven. Bij de
-standaarduitvoer ga je eerst naar `Projects/mijn-notities` in je thuismap.
+standaarduitvoer ga je eerst naar `C:\App\Codex\Projects\mijn-notities`.
 Lees de gegenereerde README voor het starten van de app. De meegeleverde workflow
 kan op GitHub testen zodra dit project de hoofdmap van een repository vormt;
 het uitvoeren van de generator publiceert niets.

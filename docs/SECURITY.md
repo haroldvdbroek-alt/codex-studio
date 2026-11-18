@@ -1,5 +1,9 @@
 # Veilig werken met het lokale dashboard
 
+De [CLI-back-upfunctie](BACKUPS.md) en [herstelfunctie](RESTORE.md) staan los van
+HTTP. Het dashboard blijft alleen-lezen en heeft geen route om een back-up,
+herstel of andere schrijfactie te starten.
+
 Start vanuit de hoofdmap in PowerShell:
 
 ```powershell

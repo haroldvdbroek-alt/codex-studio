@@ -635,7 +635,7 @@ def check_project(root: Path, name: str, run_tests: bool = False) -> list[CheckR
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Bekijk studio-projecten zonder ze te wijzigen.")
+    parser = argparse.ArgumentParser(description="Bekijk en controleer projecten; back-up en herstel alleen na bevestiging.")
     commands = parser.add_subparsers(dest="command", required=True)
     listing = commands.add_parser("list", help="Toon projecten met .codex-studio.json")
     listing.add_argument("--root", type=Path, default=None, help="Projectroot (standaard: ~/Projects)")
@@ -643,12 +643,37 @@ def main(argv: list[str] | None = None) -> int:
     updates.add_argument("--root", type=Path, default=None, help="Projectroot (standaard: ~/Projects)")
     dashboard = commands.add_parser("dashboard", help="Start het lokale alleen-lezen browserdashboard")
     dashboard.add_argument("--root", type=Path, default=None, help="Projectroot (standaard: ~/Projects)")
+    backup = commands.add_parser("backup", help="Toon veilige broncode-selectie; aanmaken alleen met --create en bevestiging")
+    backup.add_argument("project", help="Directe projectmapnaam onder de root")
+    backup.add_argument("--root", type=Path, default=None, help="Projectroot (standaard: ~/Projects)")
+    backup.add_argument("--output", type=Path, default=None, help="Lokale back-upmap (standaard: ~/StudioBackups)")
+    backup.add_argument("--create", action="store_true", help="Vraag na het overzicht expliciete toestemming om ZIP te maken")
+    restore = commands.add_parser("restore", help="Verifieer Studio-ZIP; herstel alleen naar een nieuwe map na bevestiging")
+    restore.add_argument("archive", type=Path, help="Bestaand lokaal Studio-ZIP-archief")
+    restore.add_argument("--output", required=True, type=Path, help="Nieuwe lokale doelmap; de ouder moet bestaan")
+    restore.add_argument("--create", action="store_true", help="Vraag na verificatie en overzicht expliciete toestemming voor herstel")
     checking = commands.add_parser("check", help="Controleer metadata, templateconfiguratie en Git-status")
     checking.add_argument("project", help="Directe projectmapnaam onder de root")
     checking.add_argument("--root", type=Path, default=None, help="Projectroot (standaard: ~/Projects)")
     checking.add_argument("--run-tests", action="store_true", help="Vraag bevestiging voor een toegestane testopdracht")
     args = parser.parse_args(argv)
+    if args.command == "restore":
+        previous = sys.dont_write_bytecode
+        try:
+            sys.dont_write_bytecode = True
+            from restore import run
+            return run(args.archive, args.output, args.create)
+        finally:
+            sys.dont_write_bytecode = previous
     root = Path.home() / "Projects" if args.root is None else args.root
+    if args.command == "backup":
+        previous = sys.dont_write_bytecode
+        try:
+            sys.dont_write_bytecode = True
+            from backup import run
+            return run(root, args.project, args.output, args.create)
+        finally:
+            sys.dont_write_bytecode = previous
     if args.command == "dashboard":
         # Geen bytecodebestand schrijven bij het laden van het lokale dashboard.
         previous = sys.dont_write_bytecode
