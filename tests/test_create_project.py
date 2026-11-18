@@ -108,8 +108,10 @@ class ProjectGeneratorTests(unittest.TestCase):
                 generator.create_project("voorbeeld", self.root)
         self.assertEqual(list((self.root / "voorbeeld").iterdir()), [])
 
-    def test_default_output_uses_home_projects(self):
-        with patch.object(generator.Path, "home", return_value=self.root):
+    def test_default_output_uses_configured_base_without_writing_outside_test(self):
+        # De bestaande instelling is configureerbaar; tests mogen nooit naar de
+        # echte standaardmap schrijven of een andere standaard afdwingen.
+        with patch.object(generator, "DEFAULT_OUTPUT", self.root / "Projects"):
             target = generator.create_project("voorbeeld-app")
         self.assertEqual(target, self.root / "Projects" / "voorbeeld-app")
 

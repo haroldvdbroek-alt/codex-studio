@@ -11,6 +11,8 @@ Deze studio bevat ontwikkelafspraken, templates voor Python, web, offline AI en 
 - [Veiligheid, secrets en persoonlijke gegevens](docs/SECURITY.md)
 - [Beschikbare en geplande templates](docs/TEMPLATES.md)
 - [Problemen oplossen en bekende beperkingen](docs/TROUBLESHOOTING.md)
+- [Een release voorbereiden en handmatig publiceren](docs/RELEASING.md)
+- [Changelog](CHANGELOG.md)
 
 ## Wat staat waar?
 
@@ -70,7 +72,7 @@ python .\create_project.py mijn-notities --type python --output "$HOME\Projects"
 Dit PowerShell-voorbeeld maakt `Projects/mijn-notities` onder je thuismap.
 Gebruik voorlopig altijd `--output`: de huidige code gebruikt zonder die optie
 `C:/App/Codex/Projects`. De helptekst toont nu die werkelijke standaard;
-de bestaande test die `~/Projects` verwacht is daarmee nog niet opgelost.
+de test controleert de ingestelde standaard nu veilig met een tijdelijke map.
 De package heet
 `mijn_notities`: koppeltekens worden underscores, zodat Python de naam kan importeren.
 
@@ -196,13 +198,21 @@ Een manifestwijziging geldt uitsluitend voor volgende aanmaakopdrachten.
 
 ## De studio testen
 
-De generator-tests controleren naamvalidatie, bestaande doelen, bestandsselectie
-en een gegenereerd project. Er is momenteel een bekende fout in de standaardmap:
-`test_default_output_uses_home_projects` kan buiten zijn tijdelijke testmap
-proberen te schrijven. Voer daarom niet blind de volledige suite uit.
-[Problemen oplossen](docs/TROUBLESHOOTING.md) bevat een uitvoerbare beperkte
-controle die deze ene test expliciet uitsluit. Symlink-tests kunnen worden
-overgeslagen als het systeem geen koppelingen toestaat.
+Voer vanuit de studiohoofdmap uit:
+
+```powershell
+python -B run_tests.py
+```
+
+Dit voert alle generator-, menu-, manifest-, integratie- en templatetests uit,
+plus de JavaScript-tests. Gebruik Python 3.11+ en Node.js 22+. Er wordt niets
+geinstalleerd. Een ontbrekende Node-opdracht of falende suite geeft exitcode 1.
+De standaardmap-test gebruikt een tijdelijk ingestelde doelmap; er wordt geen
+test uitgesloten. Symlink-tests kunnen op Windows worden overgeslagen.
+
+De workflow `.github/workflows/studio-tests.yml` voert dezelfde opdracht uit
+op Windows en Linux met Python 3.11/3.14 en Node.js 22/24. Hij publiceert niets.
+Zie [release voorbereiden](docs/RELEASING.md) en [de changelog](CHANGELOG.md).
 
 Test het oorspronkelijke template vanuit de studiohoofdmap met:
 

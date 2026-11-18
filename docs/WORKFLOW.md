@@ -118,12 +118,15 @@ templatemap van de studio wordt niet als zelfstandige workflow ontdekt.
 
 ## De studio zelf controleren
 
-De generator-tests staan in de studiohoofdmap onder `tests`. Er is momenteel
-een bekende fout: de standaardmap is hardcoded en de test
-`test_default_output_uses_home_projects` verwacht de thuismap. Draai daarom
-voorlopig niet blind de volledige suite: die test kan buiten de tijdelijke map
-proberen te schrijven. Zie [problemen oplossen](TROUBLESHOOTING.md) voor een
-veilige beperkte controle. Verzwijg de uitgesloten test niet in je verslag.
+Voer vanuit de studiohoofdmap `python -B run_tests.py` uit. Die opdracht test
+het menu, de generator, het manifest, de vier templates en zelfstandige projecten,
+plus de JavaScript-code. Gebruik Python 3.11+ en Node.js 22+; er zijn geen extra
+pakketten nodig. Een ontbrekend hulpmiddel of falende suite geeft een foutcode.
+De standaardmap-test gebruikt een tijdelijk doel. Beoordeel symlink-skips en
+de CI-resultaten op Windows en Linux.
+
+Publiceren blijft handmatig. Volg [de releasehandleiding](RELEASING.md) en werk
+[de changelog](../CHANGELOG.md) bij voordat je een release vaststelt.
 
 De branch- en beoordelingsstappen sluiten aan bij de officiële uitleg van
 [git switch](https://git-scm.com/docs/git-switch),
