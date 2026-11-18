@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "project": {
+    "name": "codex-studio"
+  },
+  "generator": {
+    "name": "Codex Development Studio",
+    "version": null
+  },
+  "template": {
+    "id": "python",
+    "version": null
+  },
+  "registration": {
+    "method": "manual",
+    "note": "Projecttype vastgesteld op basis van projectstructuur; oorspronkelijke studio- en templateversie onbekend. Deze registratie bewijst niet dat een template is gebruikt."
+  }
+}

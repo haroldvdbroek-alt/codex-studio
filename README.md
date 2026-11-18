@@ -4,6 +4,58 @@ Codex Development Studio is een herbruikbare werkmap met afspraken voor samenwer
 
 Deze studio bevat ontwikkelafspraken, een Python-template en een generator voor nieuwe projecten. De generator gebruikt alleen de Python-standaardbibliotheek. Je hebt Python 3.11 of hoger nodig, maar hoeft geen pakketten te installeren.
 
+## Projecten bekijken
+
+Gebruik vanuit de studiohoofdmap:
+
+```powershell
+python -B .\studio.py list
+python -B .\studio.py list --root "D:\Projecten"
+```
+
+De standaardroot is `$HOME\Projects`, onafhankelijk van de standaardmap van de
+generator. Alleen directe projectmappen met `.codex-studio.json` worden herkend.
+Het overzicht toont naam, type, studioversie, templateversie en locatie. Een
+ontbrekende root wordt niet aangemaakt; het commando geeft dan een foutmelding.
+Een lege root geeft een leeg overzicht. Er is geen recursieve zoekactie.
+
+Verwachte UTF-8-metadata, met of zonder BOM (maximaal 64 KiB):
+
+```json
+{
+  "schema_version": 1,
+  "project": {"name": "mijn-project"},
+  "generator": {"version": "1.0.0"},
+  "template": {"id": "python", "version": "1.0.0"}
+}
+```
+
+Types zijn `python`, `web`, `ai` en `automation`; versies gebruiken drie getallen
+zoals `1.0.0`. Bij handmatige registratie mag een versie expliciet `null` zijn:
+het overzicht toont dan `onbekend`, zonder een historische versie te verzinnen.
+Ontbrekende versievelden blijven ongeldig. Andere velden worden niet getoond. Ongeldige of onleesbare metadata
+en koppelingen worden overgeslagen met een waarschuwing zonder metadata-inhoud.
+Bij waarschuwingen is de exitcode 1: het overzicht kan onvolledig zijn. Zonder
+problemen is de exitcode 0; ongeldige commandoregelargumenten geven 2.
+
+Unicode blijft behouden bij UTF-8-uitvoer. Bij een beperktere terminalcodering,
+zoals CP1252, worden niet-ondersteunde tekens zichtbaar ge-escaped (bijvoorbeeld
+`\u6d4b`) zodat ook omgeleide uitvoer niet crasht. Dit wijzigt de metadata niet.
+
+Symlinks en Windows-junctions in root, bovenliggende mappen, projectmappen of
+metadata worden geweigerd. Gebruik rechtstreekse, vertrouwde mappen die niet
+gelijktijdig door andere processen worden vervangen. Leescontrole en bestandstoegang
+zijn geen transactionele momentopname. Het commando voert geen projectcode uit
+en leest geen `.env`, broncode of andere projectbestanden.
+
+De huidige generator op deze branch schrijft deze metadata nog niet. Ook
+`.codex-project.json` wordt niet als alternatief gelezen. Er worden geen bestanden
+hernoemd, toegevoegd of gemigreerd in bestaande projecten. Alleen-lezen betekent
+hier geen inhouds- of configuratiewijzigingen; het besturingssysteem kan bij lezen
+wel toegangstijden bijwerken. `-B` voorkomt Python-importcachebestanden.
+
+Test het nieuwe commando met `python -B -m unittest discover -s tests -p test_studio.py -v`.
+
 ## Wat staat waar?
 
 | Onderdeel | Doel |
