@@ -116,7 +116,9 @@ class APITests(unittest.TestCase):
         for _ in range(8):
             self.server.slots.acquire()
         try:
-            with self.assertRaises((http.client.RemoteDisconnected, ConnectionResetError)):
+            # Windows kan een bewust gesloten verbinding als WinError 10053 melden.
+            with self.assertRaises((http.client.RemoteDisconnected, ConnectionResetError,
+                                    ConnectionAbortedError)):
                 self.request()
         finally:
             for _ in range(8):
