@@ -1,0 +1,10 @@
+[project]
+name = "PROJECT_NAME"
+version = "0.1.0"
+description = "Een herbruikbaar Python-project met alleen de standaardbibliotheek."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+# Alleen projectmetadata: dit template configureert bewust geen build-backend.
+# Testen en uitvoeren kan zonder pip, installatie of externe pakketten.

@@ -1,0 +1,4 @@
+# Gegenereerde lokale Python-bestanden
+__pycache__/
+*.py[cod]
+.venv/
