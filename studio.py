@@ -12,7 +12,14 @@ import sys
 import tomllib
 import unicodedata
 
-from process_runner import OutputLimitExceeded, run_bounded
+# Ook de gewone opdracht `python studio.py updates` mag bij deze lokale import
+# geen __pycache__ in de studio aanmaken (bijvoorbeeld als de studio in de root staat).
+_previous_bytecode_setting = sys.dont_write_bytecode
+try:
+    sys.dont_write_bytecode = True
+    from process_runner import OutputLimitExceeded, run_bounded
+finally:
+    sys.dont_write_bytecode = _previous_bytecode_setting
 
 METADATA_FILE = ".codex-studio.json"
 MAX_METADATA_BYTES = 64 * 1024
@@ -103,9 +110,26 @@ def metadata_version(section: object) -> str | None:
     if value is None:
         return None
     value = metadata_field(section, "version")
-    if not re.fullmatch(r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)", value):
-        raise ValueError("Ongeldig versienummer.")
+    parse_semver(value)
     return value
+
+
+def parse_semver(value: object) -> tuple[int, int, int]:
+    """Alleen stabiele MAJOR.MINOR.PATCH, zonder voorloopnullen of suffixen."""
+    if (not isinstance(value, str) or len(value) > 200 or not re.fullmatch(
+        r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)", value
+    )):
+        raise ValueError("Ongeldig versienummer.")
+    return tuple(int(part) for part in value.split("."))
+
+
+def compare_versions(current: str, local: str) -> str:
+    project, available = parse_semver(current), parse_semver(local)
+    if project == available:
+        return "ACTUEEL"
+    if project > available:
+        return "PROJECT_LOOPT_VOOR"
+    return "GROTE_WIJZIGING" if available[0] > project[0] else "NIEUW_BESCHIKBAAR"
 
 
 def read_bytes_file(path: Path, limit: int = MAX_METADATA_BYTES) -> bytes:
@@ -128,8 +152,8 @@ def read_bytes_file(path: Path, limit: int = MAX_METADATA_BYTES) -> bytes:
     return raw
 
 
-def read_project(directory: Path) -> Project | None:
-    """Open uitsluitend de begrensde metadata, nooit broncode of configuratie."""
+def read_project_data(directory: Path) -> dict | None:
+    """Gedeelde begrensde JSON-lezer; geen herstel of normalisatie op schijf."""
     try:
         raw = read_bytes_file(directory / METADATA_FILE)
     except FileNotFoundError:
@@ -139,6 +163,14 @@ def read_project(directory: Path) -> Project | None:
     data = json.loads(raw.decode("utf-8-sig"), object_pairs_hook=unique_keys)
     if not isinstance(data, dict) or type(data.get("schema_version")) is not int or data["schema_version"] != 1:
         raise ValueError("Niet-ondersteunde metadataversie; verwacht schema_version 1.")
+    return data
+
+
+def read_project(directory: Path) -> Project | None:
+    """Open uitsluitend de begrensde metadata, nooit broncode of configuratie."""
+    data = read_project_data(directory)
+    if data is None:
+        return None
     name = metadata_field(data.get("project"), "name")
     kind = metadata_field(data.get("template"), "id")
     studio_version = metadata_version(data.get("generator"))
@@ -148,13 +180,12 @@ def read_project(directory: Path) -> Project | None:
     return Project(name, kind, studio_version, template_version, directory)
 
 
-def list_projects(root: Path) -> tuple[list[Project], list[str]]:
-    """Scan alleen directe mappen. Waarschuwingen bevatten nooit metadata-inhoud."""
+def project_directories(root: Path):
+    """Gedeelde directe scan; lever onveilige/onleesbare paden als waarschuwing."""
     root = Path(os.path.abspath(root.expanduser()))
     reject_links(root)
     if not root.is_dir():
         raise NotADirectoryError("De projectroot moet een bestaande map zijn.")
-    projects, warnings = [], []
     for directory in sorted(root.iterdir(), key=lambda path: path.name.casefold()):
         try:
             info = directory.lstat()
@@ -163,12 +194,133 @@ def list_projects(root: Path) -> tuple[list[Project], list[str]]:
             if not stat.S_ISDIR(info.st_mode):
                 continue
             reject_links(directory)
+        except (OSError, ValueError) as error:
+            yield directory, f"Overgeslagen: {terminal_text(directory.name)} ({type(error).__name__})."
+            continue
+        yield directory, None
+
+
+def list_projects(root: Path) -> tuple[list[Project], list[str]]:
+    """Scan alleen directe mappen. Waarschuwingen bevatten nooit metadata-inhoud."""
+    projects, warnings = [], []
+    for directory, warning in project_directories(root):
+        if warning is not None:
+            warnings.append(warning)
+            continue
+        try:
             project = read_project(directory)
             if project is not None:
                 projects.append(project)
         except (OSError, ValueError, RecursionError) as error:
             warnings.append(f"Overgeslagen: {terminal_text(directory.name)} ({type(error).__name__}).")
     return sorted(projects, key=lambda p: (p.name.casefold(), str(p.location))), warnings
+
+
+@dataclass(frozen=True)
+class UpdateResult:
+    name: str
+    kind: str
+    current: str
+    local: str
+    status: str
+    reason: str = ""
+    problem: bool = False
+
+
+def version_state(section: object) -> tuple[str, str]:
+    if not isinstance(section, dict):
+        return "ongeldig", "ongeldig"
+    if "version" not in section:
+        return "ontbreekt", "ontbreekt"
+    if section["version"] is None:
+        return "onbekend", "onbekend"
+    try:
+        parse_semver(section["version"])
+    except ValueError:
+        return "ongeldig", "ongeldig"
+    return section["version"], "geldig"
+
+
+def update_catalog() -> dict[str, dict]:
+    """Lees het lokale manifest eenmaal; ongeldige entries blokkeren geen andere types."""
+    data = json.loads(read_bytes_file(MANIFEST_PATH).decode("utf-8-sig"), object_pairs_hook=unique_keys)
+    if (not isinstance(data, dict) or type(data.get("schema_version")) is not int
+            or data["schema_version"] != 1 or not isinstance(data.get("templates"), dict)):
+        raise ValueError("Ongeldig of niet-ondersteund manifestschema.")
+    catalog = {}
+    for kind, spec in data["templates"].items():
+        if kind not in PROJECT_TYPES:
+            raise ValueError("Onbekend templatetype in lokaal manifest.")
+        value, state = version_state(spec)
+        reason = "" if state == "geldig" else f"Lokale templateversie {state}."
+        try:
+            if not isinstance(spec, dict):
+                raise ValueError
+            metadata_field(spec, "label")
+            safe_relative_path(spec.get("directory"))
+            files = spec.get("files")
+            if not isinstance(files, list) or not files:
+                raise ValueError
+            paths = [str(safe_relative_path(item)).casefold() for item in files]
+            if len(set(paths)) != len(paths):
+                raise ValueError
+        except (ValueError, TypeError):
+            reason = "Lokale templatebeschrijving ongeldig of onvolledig."
+        catalog[kind] = {"version": value, "reason": reason}
+    return catalog
+
+
+def project_update(directory: Path, data: dict, catalog: dict[str, dict]) -> UpdateResult:
+    name, kind = terminal_text(directory.name), "ontbreekt"
+    current, state = version_state(data.get("template"))
+    local = "ontbreekt"
+    try:
+        name = metadata_field(data.get("project"), "name")
+    except ValueError:
+        return UpdateResult(name, kind, current, local, "ONBEKEND", "Projectnaam ontbreekt of is ongeldig.", True)
+    template = data.get("template")
+    if not isinstance(template, dict) or "id" not in template:
+        return UpdateResult(name, kind, current, local, "ONBEKEND", "Templatetype ontbreekt.", True)
+    try:
+        kind = metadata_field(template, "id")
+    except ValueError:
+        return UpdateResult(name, "ongeldig", current, local, "ONBEKEND", "Templatetype ongeldig.", True)
+    if kind not in PROJECT_TYPES:
+        return UpdateResult(name, kind, current, local, "ONBEKEND", "Onbekend templatetype.", True)
+    spec = catalog.get(kind)
+    if spec is not None:
+        local = spec["version"]
+    # Ook niet voor de vergelijking gebruikte vereiste metadata moet geldig zijn.
+    try:
+        metadata_version(data.get("generator"))
+    except ValueError:
+        return UpdateResult(name, kind, current, local, "ONBEKEND", "Studioversie ontbreekt of is ongeldig.", True)
+    if spec is None:
+        return UpdateResult(name, kind, current, local, "ONBEKEND", "Templatetype ontbreekt in lokaal manifest.", True)
+    if spec["reason"]:
+        return UpdateResult(name, kind, current, local, "ONBEKEND", spec["reason"], True)
+    if state != "geldig":
+        return UpdateResult(name, kind, current, local, "ONBEKEND", f"Project-templateversie {state}.", state != "onbekend")
+    return UpdateResult(name, kind, current, local, compare_versions(current, local))
+
+
+def project_updates(root: Path) -> tuple[list[UpdateResult], list[str], int]:
+    catalog = update_catalog()
+    results, warnings, missing = [], [], 0
+    for directory, warning in project_directories(root):
+        if warning is not None:
+            warnings.append(warning)
+            continue
+        try:
+            data = read_project_data(directory)
+            if data is None:
+                missing += 1
+                continue
+            results.append(project_update(directory, data, catalog))
+        except (OSError, ValueError, RecursionError):
+            results.append(UpdateResult(terminal_text(directory.name), "ongeldig", "ongeldig", "onbekend",
+                                        "ONBEKEND", "Metadata ongeldig, onleesbaar of onveilig.", True))
+    return sorted(results, key=lambda row: (row.name.casefold(), row.kind)), warnings, missing
 
 
 @dataclass(frozen=True)
@@ -469,12 +621,33 @@ def main(argv: list[str] | None = None) -> int:
     commands = parser.add_subparsers(dest="command", required=True)
     listing = commands.add_parser("list", help="Toon projecten met .codex-studio.json")
     listing.add_argument("--root", type=Path, default=None, help="Projectroot (standaard: ~/Projects)")
+    updates = commands.add_parser("updates", help="Vergelijk project-templateversies met het lokale manifest")
+    updates.add_argument("--root", type=Path, default=None, help="Projectroot (standaard: ~/Projects)")
     checking = commands.add_parser("check", help="Controleer metadata, templateconfiguratie en Git-status")
     checking.add_argument("project", help="Directe projectmapnaam onder de root")
     checking.add_argument("--root", type=Path, default=None, help="Projectroot (standaard: ~/Projects)")
     checking.add_argument("--run-tests", action="store_true", help="Vraag bevestiging voor een toegestane testopdracht")
     args = parser.parse_args(argv)
     root = Path.home() / "Projects" if args.root is None else args.root
+    if args.command == "updates":
+        try:
+            results, warnings, missing = project_updates(root)
+        except (OSError, ValueError, RecursionError):
+            print_output("Fout: projectroot of lokaal manifest ontbreekt, is ongeldig of onveilig.", file=sys.stderr)
+            return 1
+        except KeyboardInterrupt:
+            print_output("Updatescontrole geannuleerd; niets gewijzigd.")
+            return 130
+        rows = [("PROJECT", "TYPE", "HUIDIG", "LOKAAL", "STATUS", "TOELICHTING")]
+        rows.extend((row.name, row.kind, row.current, row.local, row.status, row.reason) for row in results)
+        rows = [tuple(output_text(terminal_text(cell), sys.stdout) for cell in row) for row in rows]
+        widths = [max(len(row[i]) for row in rows) for i in range(5)]
+        for row in rows:
+            print_output("  ".join(row[i].ljust(widths[i]) for i in range(5)) + "  " + row[5])
+        for warning in warnings:
+            print_output("Waarschuwing: " + warning, file=sys.stderr)
+        print_output(f"{len(results)} project(en); {missing} map(pen) zonder metadata overgeslagen; {len(warnings)} onveilige/onleesbare paden overgeslagen.")
+        return 1 if warnings or any(row.problem for row in results) else 0
     if args.command == "check":
         try:
             results = check_project(root, args.project, args.run_tests)
