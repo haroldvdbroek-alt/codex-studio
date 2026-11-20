@@ -18,6 +18,20 @@ import studio
 
 
 class BenchmarkTests(unittest.TestCase):
+    def collect_expected_failure(self, event="BENCHMARK_FAILED"):
+        """Controleer verwachte foutlogs zonder ze als testfout af te drukken."""
+        error = StringIO()
+        with redirect_stderr(error):
+            report = benchmark.collect(4, 1)
+        self.assertNotEqual(report.exit_code, 0)
+        if event is None:
+            self.assertEqual(error.getvalue(), "")
+        else:
+            lines = error.getvalue().splitlines()
+            self.assertEqual(len(lines), 1, error.getvalue())
+            self.assertIn(" " + event + ":", lines[0])
+        return report
+
     def cli(self, *args):
         out, err = StringIO(), StringIO()
         with redirect_stdout(out), redirect_stderr(err):
@@ -138,7 +152,7 @@ class BenchmarkTests(unittest.TestCase):
                 return workspace
             with self.subTest(failure=failure), patch.object(benchmark, "make_workspace", side_effect=create), \
                  patch.object(studio, "list_projects", side_effect=failure):
-                report = benchmark.collect(4, 1)
+                report = self.collect_expected_failure(None if code == 130 else "BENCHMARK_FAILED")
             self.assertEqual(report.exit_code, code)
             self.assertTrue(report.benchmark.temporary_files_removed)
             self.assertTrue(all(not path.exists() for path in created))
@@ -147,9 +161,9 @@ class BenchmarkTests(unittest.TestCase):
         for limit in ("MAX_FILES", "MAX_BYTES"):
             with self.subTest(limit=limit), patch.object(benchmark, limit, 0), \
                  patch.object(benchmark, "make_workspace", side_effect=AssertionError("Niet aanmaken")):
-                self.assertEqual(benchmark.collect(4, 1).exit_code, 1)
+                self.assertEqual(self.collect_expected_failure().exit_code, 1)
         with patch.object(studio, "project_updates", return_value=([], [], 0)):
-            report = benchmark.collect(4, 1)
+            report = self.collect_expected_failure()
         self.assertEqual(report.exit_code, 1)
         self.assertEqual(report.completion, "error")
         self.assertTrue(report.benchmark.temporary_files_removed)
@@ -163,7 +177,7 @@ class BenchmarkTests(unittest.TestCase):
             return workspace
         try:
             with patch.object(benchmark, "make_workspace", side_effect=create), patch.object(benchmark, "cleanup", return_value=None):
-                report = benchmark.collect(4, 1)
+                report = self.collect_expected_failure("BENCHMARK_CLEANUP_FAILED")
             self.assertEqual(report.exit_code, 1)
             self.assertFalse(report.benchmark.temporary_files_removed)
             self.assertTrue(any(item.status == "FAIL" and item.label == "Opruimen" for item in report.results))
@@ -171,15 +185,15 @@ class BenchmarkTests(unittest.TestCase):
             for workspace in created:
                 real_cleanup(workspace)
         with patch.object(studio, "MANIFEST_PATH", Path("niet-aanwezig-manifest.json")):
-            self.assertEqual(benchmark.collect(4, 1).exit_code, 1)
+            self.assertEqual(self.collect_expected_failure().exit_code, 1)
         with patch.object(studio, "list_projects", return_value=([], [])):
-            report = benchmark.collect(4, 1)
+            report = self.collect_expected_failure()
             self.assertEqual(report.exit_code, 1)
             self.assertTrue(report.benchmark.temporary_files_removed)
 
     def test_time_limit_failure_cleans_own_workspace(self):
         with patch.object(benchmark, "TIME_LIMIT", -1):
-            report = benchmark.collect(4, 1)
+            report = self.collect_expected_failure()
         self.assertEqual(report.exit_code, 1)
         self.assertTrue(report.benchmark.temporary_files_removed)
 

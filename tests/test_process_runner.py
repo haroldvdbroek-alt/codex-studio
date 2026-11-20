@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -49,17 +50,39 @@ class ProcessRunnerTests(unittest.TestCase):
         self.assertLess(time.monotonic() - start, 3)
 
     def test_timeout_kills_descendant_holding_output_pipe(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            pidfile = Path(temporary) / "child.pid"
-            code = ("import subprocess,sys,time; from pathlib import Path; "
-                    "child=subprocess.Popen([sys.executable,'-I','-S','-B','-c','import time; time.sleep(20)']); "
-                    "Path(sys.argv[1]).write_text(str(child.pid)); time.sleep(20)")
-            start = time.monotonic()
-            with self.assertRaises(subprocess.TimeoutExpired):
-                process_runner.run_bounded(self.command(code, str(pidfile)), timeout=0.8)
-            self.assertLess(time.monotonic() - start, 3)
-            self.assertTrue(pidfile.is_file(), "De fixture moet echt een kindproces hebben gestart")
-            self.assert_process_stopped(int(pidfile.read_text()))
+        # Test zowel normale opstart als een opstart die de oude 0,8s-grens
+        # overschrijdt. De echte processen en pijpen worden niet gemockt.
+        for startup_delay in (0, 1):
+            with self.subTest(startup_delay=startup_delay), tempfile.TemporaryDirectory() as temporary:
+                pidfile = Path(temporary) / "child.pid"
+                readyfile = Path(temporary) / "child.ready"
+                code = ("import subprocess,sys,time; from pathlib import Path; "
+                        "time.sleep(float(sys.argv[3])); "
+                        "child=subprocess.Popen([sys.executable,'-I','-S','-B','-c','import time; time.sleep(60)']); "
+                        "Path(sys.argv[1]).write_text(str(child.pid)); "
+                        "Path(sys.argv[2]).touch(); time.sleep(60)")
+                startup_timeout = 15
+                deadline_observed = []
+                real_clock = time.monotonic
+
+                def clock_after_ready():
+                    now = real_clock()
+                    if readyfile.is_file():
+                        if not deadline_observed:
+                            deadline_observed.append(now)
+                        # Alleen de runner-klok schuift vooruit: pas na het
+                        # schrijven van de PID verloopt de uitvoerdeadline.
+                        return now + startup_timeout
+                    return now
+
+                with patch.object(process_runner, "time", SimpleNamespace(monotonic=clock_after_ready)):
+                    with self.assertRaises(subprocess.TimeoutExpired):
+                        process_runner.run_bounded(self.command(
+                            code, str(pidfile), str(readyfile), str(startup_delay)), timeout=startup_timeout)
+                self.assertTrue(deadline_observed, "De fixture startte niet binnen de afzonderlijke opstartlimiet")
+                self.assertLess(real_clock() - deadline_observed[0], process_runner.CLEANUP_TIMEOUT + 2)
+                self.assertTrue(pidfile.is_file(), "De fixture moet echt een kindproces hebben gestart")
+                self.assert_process_stopped(int(pidfile.read_text()))
 
     def test_success_also_cleans_up_lingering_descendant(self):
         with tempfile.TemporaryDirectory() as temporary:
