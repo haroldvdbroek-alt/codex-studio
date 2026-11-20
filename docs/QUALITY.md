@@ -94,6 +94,19 @@ testuitvoer wordt niet afgedrukt om gegevenslekken te beperken. Het overzicht
 meldt het aantal gevonden en overgeslagen tests. Nul gevonden tests of alle
 tests overgeslagen geeft FAIL, ook als unittest exitcode 0 teruggeeft.
 
+## Testuitvoer herkennen
+
+Bij `python -m unittest discover -s tests -v` is de einduitslag bepalend:
+`OK` betekent geen mislukte tests; `FAILED (failures=..., errors=...)` betekent
+dat er wel tests mislukken. `skipped` betekent dat een test bewust niet is
+uitgevoerd, bijvoorbeeld door Windows-rechten of het bestaande uitvoerbeleid.
+
+Tests bootsen ook fouten na om de foutafhandeling te controleren. Verwachte
+benchmark- en dashboardmeldingen worden binnen die tests opgevangen en op hun
+gebeurteniscode gecontroleerd. Ze verschijnen daardoor niet als losse
+`[ERROR]`- of `[WARNING]`-regels tussen geslaagde tests. Echte testfouten en
+onverwachte meldingen blijven zichtbaar; de normale CLI-logging is ongewijzigd.
+
 ## Tekst, JSON en Markdown
 
 Kies de gewenste vorm met `--format`; `text` blijft de standaard:

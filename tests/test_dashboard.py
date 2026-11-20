@@ -235,8 +235,11 @@ class CollectionTests(unittest.TestCase):
                 def fail(*args, **kwargs):
                     snapshot.stop.set()
                     raise failure
-                with patch.object(studio, "run_bounded", side_effect=fail):
+                error = io.StringIO()
+                with patch.object(studio, "run_bounded", side_effect=fail), contextlib.redirect_stderr(error):
                     snapshot.refresh()
+                self.assertEqual(len(error.getvalue().splitlines()), 1)
+                self.assertIn("DASHBOARD_SCAN_FAILED:", error.getvalue())
                 self.assertEqual(json.loads(snapshot.read())["state"], "ONVOLLEDIG")
 
     def test_fixed_worker_command_and_successful_snapshot(self):
@@ -275,8 +278,11 @@ class CollectionTests(unittest.TestCase):
                 def run(*args, **kwargs):
                     snapshot.stop.set()
                     return subprocess.CompletedProcess([], code, output, b"")
-                with patch.object(studio, "run_bounded", side_effect=run):
+                error = io.StringIO()
+                with patch.object(studio, "run_bounded", side_effect=run), contextlib.redirect_stderr(error):
                     snapshot.refresh()
+                self.assertEqual(len(error.getvalue().splitlines()), 1)
+                self.assertIn("DASHBOARD_SCAN_FAILED:", error.getvalue())
                 self.assertEqual(json.loads(snapshot.read())["state"], "ONVOLLEDIG")
 
     def test_studio_commands_remain_available(self):
