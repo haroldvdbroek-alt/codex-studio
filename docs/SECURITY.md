@@ -4,6 +4,30 @@ De [CLI-back-upfunctie](BACKUPS.md) en [herstelfunctie](RESTORE.md) staan los va
 HTTP. Het dashboard blijft alleen-lezen en heeft geen route om een back-up,
 herstel of andere schrijfactie te starten.
 
+Ook [quality](QUALITY.md) is alleen een CLI-opdracht. De standaardmodus leest
+broncode voor syntaxiscontrole en start alleen de bestaande alleen-lezen
+Git-controles. `--run-tests` vereist de waarschuwing en expliciete bevestiging;
+tests kunnen bestanden wijzigen en zijn geen beveiligingssandbox.
+Alleen een expliciete `quality --output` bewaart een nieuw rapportbestand.
+JSON en Markdown delen hetzelfde resultaatmodel; prompts staan op stderr.
+Rapportdoelen worden gecontroleerd op bestaande bestanden, onveilige paden en
+koppelingen. Rapporten kunnen relatieve bestandsnamen bevatten en zijn niet
+versleuteld; controleer ze voordat je ze deelt.
+
+Het [PowerShell-script voor Taakplanner](TASK_SCHEDULER.md) voert uitsluitend
+quality zonder tests uit. Het registreert geen taak, wijzigt geen uitvoerpolicy
+en installeert niets. Een eventuele planning ontstaat pas wanneer de gebruiker
+die zelf bewust in Windows Taakplanner opslaat.
+
+De [lokale releasecontrole](RELEASE.md) publiceert nooit en doet geen netwerk-
+of release-API-aanroepen. GitHub Actions, reviews en andere externe vereisten
+blijven handmatig te verifiëren. Een lokaal rapport is geen vrijgavebewijs;
+zelfs zonder lokale fouten is de release-check-exitcode `4`, niet `0`.
+
+De [lokale releasecontrole](RELEASE.md) publiceert nooit. Externe Actions-runs,
+reviews, branchregels en publicatietoestemming blijven handmatig te verifiëren.
+Een lokaal rapport kan die controles niet goedkeuren of een release maken.
+
 Start vanuit de hoofdmap in PowerShell:
 
 ```powershell

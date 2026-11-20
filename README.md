@@ -39,6 +39,24 @@ Controlesommen bewijzen geen herkomst; vertrouw de bron voordat je herstelde cod
 
 ## Lokaal browserdashboard
 
+Voor een lokale releasevoorcontrole is er `python -B studio.py release-check`.
+Deze opdracht publiceert nooit. Ze toont lokale blokkades en welke externe
+controles je nog handmatig moet verifiëren. Lees [release voorbereiden](docs/RELEASE.md)
+en de [changelog](CHANGELOG.md); een lokaal rapport is geen publicatietoestemming.
+
+Controleer de studio eerst met `python -B studio.py quality`. Deze opdracht
+controleert bestanden, manifest/templates, Python-syntaxis, lokale documentatielinks
+en Git-status zonder de onderzochte code uit te voeren. Met `--run-tests` vraagt
+ze na de controles toestemming voor de vaste studio-testsuite. Zie
+[quality gebruiken](docs/QUALITY.md) voor statussen, limieten en beperkingen.
+Gebruik `--format json` of `--format markdown` voor dezelfde resultaten in een
+andere vorm. Alleen met bijvoorbeeld `--format json --output quality-rapport.json`
+wordt een nieuw rapportbestand gemaakt; bestaande bestanden worden geweigerd.
+Voor een eventuele terugkerende controle zijn er een
+[PowerShell-script en Taakplanner-handleiding](docs/TASK_SCHEDULER.md).
+Er wordt geen taak automatisch aangemaakt: je test het script eerst handmatig
+en besluit daarna zelf of je een taak in Windows Taakplanner opslaat.
+
 Start vanuit deze hoofdmap in PowerShell:
 
 ```powershell

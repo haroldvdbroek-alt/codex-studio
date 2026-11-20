@@ -637,6 +637,15 @@ def check_project(root: Path, name: str, run_tests: bool = False) -> list[CheckR
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Bekijk en controleer projecten; back-up en herstel alleen na bevestiging.")
     commands = parser.add_subparsers(dest="command", required=True)
+    quality = commands.add_parser("quality", help="Controleer de studio alleen-lezen; start tests uitsluitend na bevestiging")
+    quality.add_argument("--run-tests", action="store_true", help="Vraag toestemming voor de vaste studio-testsuite")
+    quality.add_argument("--format", choices=("text", "json", "markdown"), default="text", help="Rapportvorm op stdout (standaard: text)")
+    quality.add_argument("--output", type=Path, help="Optioneel nieuw rapportbestand (.txt, .json of .md bij het gekozen formaat)")
+    release = commands.add_parser("release-check", help="Lokale releasevoorcontrole; publiceert nooit en laat externe controles handmatig open")
+    release.add_argument("--version", help="Expliciete studiokandidaat MAJOR.MINOR.PATCH; geen versie wordt geraden")
+    release.add_argument("--run-tests", action="store_true", help="Vraag toestemming voor de vaste lokale studio-testsuite")
+    release.add_argument("--format", choices=("text", "json", "markdown"), default="text")
+    release.add_argument("--output", type=Path, help="Optioneel nieuw rapportbestand; bestaande bestanden worden geweigerd")
     listing = commands.add_parser("list", help="Toon projecten met .codex-studio.json")
     listing.add_argument("--root", type=Path, default=None, help="Projectroot (standaard: ~/Projects)")
     updates = commands.add_parser("updates", help="Vergelijk project-templateversies met het lokale manifest")
@@ -657,6 +666,22 @@ def main(argv: list[str] | None = None) -> int:
     checking.add_argument("--root", type=Path, default=None, help="Projectroot (standaard: ~/Projects)")
     checking.add_argument("--run-tests", action="store_true", help="Vraag bevestiging voor een toegestane testopdracht")
     args = parser.parse_args(argv)
+    if args.command == "release-check":
+        previous = sys.dont_write_bytecode
+        try:
+            sys.dont_write_bytecode = True
+            from release_check import run
+            return run(args.version, args.run_tests, args.format, args.output)
+        finally:
+            sys.dont_write_bytecode = previous
+    if args.command == "quality":
+        previous = sys.dont_write_bytecode
+        try:
+            sys.dont_write_bytecode = True
+            from quality import run
+            return run(args.run_tests, args.format, args.output)
+        finally:
+            sys.dont_write_bytecode = previous
     if args.command == "restore":
         previous = sys.dont_write_bytecode
         try:

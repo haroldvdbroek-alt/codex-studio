@@ -161,6 +161,18 @@ voor limieten, netwerkpaden en veilig lokaal gebruik.
 
 ## 6. Bekijk het resultaat voordat je iets vastlegt
 
+Werk je aan de studio zelf, voer dan vanuit de studiohoofdmap
+`python -B .\studio.py quality` uit. Voor de vaste studio-testsuite gebruik je
+`python -B .\studio.py quality --run-tests` en bevestig je na de waarschuwing
+met `ja`. Quality controleert de studio, niet automatisch je andere projecten.
+Lees [quality gebruiken](QUALITY.md) voor wat wel en niet gecontroleerd wordt.
+Voor overdracht kun je `--format json` of `--format markdown` kiezen en met
+`--output` expliciet een nieuw rapportbestand bewaren. Controleer de exitcode;
+bij exitcode 3 is de rapportage niet veilig afgerond. Bewaar geen rapport over
+een bestaand bestand heen en behandel een overgeslagen test niet als geslaagd.
+Voor eventuele herhaling is er een [PowerShell-script met handleiding](TASK_SCHEDULER.md).
+Test het eerst handmatig; alleen jij maakt daarna desgewenst de Windows-taak aan.
+
 Ga voor Git-opdrachten terug naar de projectmap die je hebt gewijzigd:
 
 ```powershell
@@ -224,3 +236,8 @@ staat, kan GitHub Actions na publicatie testen. Een workflow die alleen in een
 templatemap staat, test het gegenereerde project niet automatisch. Controleer
 de echte Actions-uitvoer; lokale tests bewijzen geen geslaagde GitHub-run.
 Publiceren, releases en installaties gebeuren niet automatisch door deze checklist.
+
+Gebruik vóór een eventuele release de [lokale releasecontrole](RELEASE.md).
+Een schone werkmap, kandidaatversie en lokale tests vervangen geen GitHub Actions,
+reviews, branchbescherming of publicatietoestemming. Het rapport laat die controles
+expliciet open en publiceert nooit zelf iets.

@@ -78,6 +78,8 @@ De punten gelden ook voor bestaande zelfstandige projecten van die types.
 ## Afronden
 
 - [ ] Relevante tests zijn geslaagd; overgeslagen tests en niet-uitgevoerde controles zijn verklaard.
+- [ ] Bij wijzigingen aan de studio zelf is [quality](QUALITY.md) bekeken; optionele testuitvoering is afzonderlijk bevestigd.
+- [ ] Indien een quality-rapport is gevraagd: formaat, resultaten, exitcode en nieuwe bestandsnaam zijn gecontroleerd; een tijdelijk/onvolledig rapport of SKIP is niet als succes behandeld.
 - [ ] Er zijn daadwerkelijk tests gevonden; alleen een exitcode zonder testresultaat is niet genoeg.
 - [ ] Indien geregistreerd zijn `studio.py check` en `updates` met de juiste `--root` bekeken.
 - [ ] Een dashboardstatus of administratief versienummer is niet als bewijs van geslaagde tests gebruikt.
@@ -89,6 +91,7 @@ De punten gelden ook voor bestaande zelfstandige projecten van die types.
 - [ ] Bij herstel zijn de eindmelding en eventuele ONVOLLEDIG-markering gecontroleerd; code wordt pas na beoordeling uitgevoerd.
 - [ ] Wijzigingen, controles en resterende beperkingen zijn in begrijpelijk Nederlands gerapporteerd.
 - [ ] Commit, merge, push, installatie en publicatie zijn alleen uitgevoerd als die afzonderlijk waren toegestaan.
+- [ ] Bij een release zijn [de lokale releasecontrole](RELEASE.md), de exacte commit en het changelog bekeken; externe checks en toestemming zijn apart met bewijs geverifieerd.
 
 ## Bewijs en overdracht
 
