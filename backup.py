@@ -14,6 +14,7 @@ import time
 import zipfile
 
 import studio
+from studio_logging import log_event
 
 MAX_ENTRIES = 3000
 MAX_FILES = 1000
@@ -345,9 +346,6 @@ def run(root: Path, name: str, output: Path | None, create: bool) -> int:
     except (KeyboardInterrupt, EOFError):
         studio.print_output("Geannuleerd. Zonder bevestiging is niets aangemaakt; na de start kan een onvolledig archief bestaan.")
         return 130
-    except (OSError, ValueError, RecursionError, zipfile.BadZipFile, RuntimeError):
-        studio.print_output("Back-up geweigerd of mislukt: controleer projectmetadata, paden, limieten en schrijfrechten.", file=sys.stderr)
-        if plan is not None:
-            studio.print_output("Een eventueel bestand op " + studio.terminal_text(str(plan.archive)) +
-                                ".incomplete is ONVOLLEDIG en geen geslaagde back-up; bij een publicatiefout kan ook de ZIP bestaan. Er is niets automatisch verwijderd.", file=sys.stderr)
+    except Exception:
+        log_event("BACKUP_FAILED")
         return 1

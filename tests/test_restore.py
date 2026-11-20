@@ -326,7 +326,7 @@ class RestoreTests(unittest.TestCase):
     def test_normal_cli_preview_creates_no_caches_in_isolated_studio(self):
         app = self.base / "Studio"
         app.mkdir()
-        for name in ("studio.py", "backup.py", "restore.py", "process_runner.py"):
+        for name in ("studio.py", "backup.py", "restore.py", "process_runner.py", "studio_logging.py"):
             (app / name).write_bytes((Path(studio.__file__).parent / name).read_bytes())
         before = {p.name: p.read_bytes() for p in app.iterdir()}
         env = dict(os.environ)

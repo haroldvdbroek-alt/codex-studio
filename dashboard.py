@@ -14,6 +14,7 @@ import threading
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).absolute().parent))
 import studio
+from studio_logging import log_event, SafeArgumentParser
 
 MAX_ENTRIES = 500
 MAX_PROJECTS = 100
@@ -78,7 +79,7 @@ def collect(root: Path) -> dict:
         warnings.append("Lokaal manifest ontbreekt, is ongeldig of onveilig.")
     for directory, warning in studio.project_directories(root, max_entries=MAX_ENTRIES):
         if warning:
-            warnings.append(warning)
+            warnings.append("Een onveilig of onleesbaar projectpad is overgeslagen.")
             continue
         if len(projects) >= MAX_PROJECTS:
             warnings.append("Projectlimiet bereikt; overzicht onvolledig.")
@@ -158,7 +159,8 @@ class Snapshot:
                 if result.returncode:
                     raise ValueError("Worker mislukt")
                 payload = encode(json.loads(result.stdout))
-            except (OSError, ValueError, RecursionError, subprocess.SubprocessError):
+            except Exception:
+                log_event("DASHBOARD_SCAN_FAILED")
                 payload = message("ONVOLLEDIG", "Controle mislukt of tijd-/uitvoerlimiet bereikt; geen volledig resultaat.")
             with self.lock:
                 self.payload = payload
@@ -270,7 +272,7 @@ class Server(ThreadingMixIn, HTTPServer):
             self.slots.release()
 
     def handle_error(self, request, client_address):
-        pass  # Geen traceback met paden of verzoekgegevens naar terminal/browser.
+        log_event("DASHBOARD_HTTP_ERROR")
 
 
 def serve(root: Path) -> int:
@@ -286,8 +288,8 @@ def serve(root: Path) -> int:
     except KeyboardInterrupt:
         studio.print_output("Dashboard gestopt.")
         return 0
-    except (OSError, ValueError):
-        studio.print_output("Dashboard kon niet veilig starten: controleer lokale root, frontendbestanden en poorttoegang.", file=sys.stderr)
+    except Exception:
+        log_event("DASHBOARD_START_FAILED")
         return 1
     finally:
         if snapshot is not None:
@@ -299,10 +301,11 @@ if __name__ == "__main__":
         # Geïsoleerde Python neemt de scriptmap niet automatisch in sys.path op.
         try:
             sys.stdout.buffer.write(encode(collect(Path(sys.argv[2]))))
-        except (OSError, ValueError, RecursionError):
+        except Exception:
+            log_event("DASHBOARD_SCAN_FAILED")
             sys.exit(1)
     else:
         import argparse
-        parser = argparse.ArgumentParser(description="Lokaal Codex Studio-dashboard")
+        parser = SafeArgumentParser(prog="dashboard.py", description="Lokaal Codex Studio-dashboard")
         parser.add_argument("--root", type=Path, default=Path.home() / "Projects")
         sys.exit(serve(parser.parse_args().root))

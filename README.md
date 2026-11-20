@@ -1,5 +1,8 @@
 # Codex Development Studio
 
+Voor het samenvoegen na geslaagde CI en het bewust publiceren van een nieuwe
+versie zie [de publicatiehandleiding](docs/RELEASING.md).
+
 Codex Development Studio is een herbruikbare werkmap met afspraken voor samenwerken met Codex aan software. De afspraken zijn bruikbaar voor verschillende programmeertalen en soorten projecten.
 
 Deze studio bevat ontwikkelafspraken, een Python-template en een generator voor nieuwe projecten. De generator gebruikt alleen de Python-standaardbibliotheek. Je hebt Python 3.11 of hoger nodig, maar hoeft geen pakketten te installeren.
@@ -38,6 +41,35 @@ Lees de [herstelhandleiding](docs/RESTORE.md) voor beperkingen en onvolledig her
 Controlesommen bewijzen geen herkomst; vertrouw de bron voordat je herstelde code start.
 
 ## Lokaal browserdashboard
+
+Met `python -B studio.py benchmark` kun je `list`, `updates` en `check` meten
+op uitsluitend tijdelijke fictieve projecten. Er wordt geen echte projectroot
+gescand of aangepast. Zie [benchmark gebruiken](docs/BENCHMARK.md) voor omvang,
+meetbereik, JSON/Markdown-uitvoer en opruimen.
+
+Voor een lokale releasevoorcontrole is er `python -B studio.py release-check`.
+Deze opdracht publiceert nooit. Ze toont lokale blokkades en welke externe
+controles je nog handmatig moet verifiëren. Lees [release voorbereiden](docs/RELEASE.md)
+en de [changelog](CHANGELOG.md); een lokaal rapport is geen publicatietoestemming.
+
+Voor alleen-lezen onderhoud gebruik je `python studio.py maintenance`. Deze
+opdracht controleert documentatie, templates, teststructuur, versiegegevens en
+releasebestanden. Vaststellingen en aanbevelingen staan apart; testdekking wordt
+niet afgeleid uit testbestanden. Er worden geen tests of reparaties gestart.
+Zie [onderhoud controleren](docs/MAINTENANCE.md) voor JSON/Markdown en beperkingen.
+
+Controleer de studio eerst met `python -B studio.py quality`. Deze opdracht
+controleert bestanden, manifest/templates, Python-syntaxis, lokale documentatielinks
+en Git-status zonder de onderzochte code uit te voeren. Met `--run-tests` vraagt
+ze na de controles toestemming voor de vaste studio-testsuite. Zie
+[quality gebruiken](docs/QUALITY.md) voor statussen, limieten en beperkingen.
+Gebruik `--format json` of `--format markdown` voor dezelfde resultaten in een
+andere vorm. Alleen met bijvoorbeeld `--format json --output quality-rapport.json`
+wordt een nieuw rapportbestand gemaakt; bestaande bestanden worden geweigerd.
+Voor een eventuele terugkerende controle zijn er een
+[PowerShell-script en Taakplanner-handleiding](docs/TASK_SCHEDULER.md).
+Er wordt geen taak automatisch aangemaakt: je test het script eerst handmatig
+en besluit daarna zelf of je een taak in Windows Taakplanner opslaat.
 
 Start vanuit deze hoofdmap in PowerShell:
 
@@ -407,6 +439,16 @@ Vervang tekst tussen vierkante haken door je eigen gegevens. Deel geen wachtwoor
 De instructies in [AGENTS.md](AGENTS.md) gelden voor deze map en onderliggende projectmappen. Een project kan aanvullende instructies in een eigen `AGENTS.md` hebben; Codex leest die ook voordat het daar wijzigingen maakt.
 
 Wil je de afspraken gebruiken in een project buiten deze studio, laat Codex dan eerst het bestaande project en eventuele instructies onderzoeken. Je kunt daarna vragen de afspraken passend over te nemen. Overschrijf een bestaand instructiebestand niet zomaar. Alleen verwijzen naar een externe projectmap zorgt er niet automatisch voor dat dit bestand daar geldt.
+
+## Logging en JSON
+
+De studio schrijft centrale logmeldingen naar stderr en maakt standaard geen
+logbestanden. Resultaten blijven op stdout, zodat bijvoorbeeld
+`python -B .\studio.py quality --format json` geldige JSON oplevert.
+Voeg stderr niet samen met stdout als je de JSON automatisch verwerkt.
+Fouten krijgen een vaste gebeurteniscode zonder ruwe exceptiontekst of
+gevoelige invoer. Lees de [beveiligingsafspraken](docs/SECURITY.md) en
+de [uitleg over rapportuitvoer](docs/QUALITY.md) voor voorbeelden en beperkingen.
 
 ## Waarvoor vraagt Codex toestemming?
 

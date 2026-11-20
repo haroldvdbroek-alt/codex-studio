@@ -224,7 +224,7 @@ class UpdatesTests(unittest.TestCase):
         app = self.base / "studio"
         app.mkdir()
         source = Path(studio.__file__).parent
-        for name in ("studio.py", "process_runner.py"):
+        for name in ("studio.py", "process_runner.py", "studio_logging.py"):
             (app / name).write_bytes((source / name).read_bytes())
         (app / "templates").mkdir()
         (app / "templates" / "manifest.json").write_bytes(self.manifest.read_bytes())

@@ -1,0 +1,36 @@
+name: Studio tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, feature/reliability-maintenance]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unittest:
+    name: Windows / Python ${{ matrix.python }}
+    runs-on: windows-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.13']
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Studio unittest-tests
+        run: python -B -m unittest discover -s tests -v
+      - name: Zelfstandige Python-template testen
+        working-directory: templates/python-app
+        run: python -B -m unittest discover -s tests -v
+      - name: Alleen-lezen onderhoudscontrole
+        run: python -B studio.py maintenance --format json

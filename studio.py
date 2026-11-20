@@ -18,6 +18,7 @@ _previous_bytecode_setting = sys.dont_write_bytecode
 try:
     sys.dont_write_bytecode = True
     from process_runner import OutputLimitExceeded, run_bounded
+    from studio_logging import log_event, SafeArgumentParser
 finally:
     sys.dont_write_bytecode = _previous_bytecode_setting
 
@@ -634,9 +635,34 @@ def check_project(root: Path, name: str, run_tests: bool = False) -> list[CheckR
     return results
 
 
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Bekijk en controleer projecten; back-up en herstel alleen na bevestiging.")
+def bounded_integer(value, lower, upper):
+    try:
+        number = int(value)
+    except (ValueError, TypeError):
+        raise argparse.ArgumentTypeError("Gebruik een geheel getal.") from None
+    if not lower <= number <= upper:
+        raise argparse.ArgumentTypeError(f"Gebruik een waarde van {lower} tot en met {upper}.")
+    return number
+
+
+def _main(argv: list[str] | None = None) -> int:
+    parser = SafeArgumentParser(prog="studio.py", description="Bekijk en controleer projecten; back-up en herstel alleen na bevestiging.")
     commands = parser.add_subparsers(dest="command", required=True)
+    maintenance = commands.add_parser("maintenance", help="Controleer studio-onderhoud alleen-lezen; geen reparaties of testuitvoering")
+    maintenance.add_argument("--format", choices=("text", "json", "markdown"), default="text")
+    benchmark = commands.add_parser("benchmark", help="Meet list/updates/check uitsluitend met tijdelijke fictieve projecten")
+    benchmark.add_argument("--projects", type=lambda value: bounded_integer(value, 4, 200), default=12)
+    benchmark.add_argument("--repeat", type=lambda value: bounded_integer(value, 1, 10), default=3)
+    benchmark.add_argument("--format", choices=("text", "json", "markdown"), default="text")
+    quality = commands.add_parser("quality", help="Controleer de studio alleen-lezen; start tests uitsluitend na bevestiging")
+    quality.add_argument("--run-tests", action="store_true", help="Vraag toestemming voor de vaste studio-testsuite")
+    quality.add_argument("--format", choices=("text", "json", "markdown"), default="text", help="Rapportvorm op stdout (standaard: text)")
+    quality.add_argument("--output", type=Path, help="Optioneel nieuw rapportbestand (.txt, .json of .md bij het gekozen formaat)")
+    release = commands.add_parser("release-check", help="Lokale releasevoorcontrole; publiceert nooit en laat externe controles handmatig open")
+    release.add_argument("--version", help="Expliciete studiokandidaat MAJOR.MINOR.PATCH; geen versie wordt geraden")
+    release.add_argument("--run-tests", action="store_true", help="Vraag toestemming voor de vaste lokale studio-testsuite")
+    release.add_argument("--format", choices=("text", "json", "markdown"), default="text")
+    release.add_argument("--output", type=Path, help="Optioneel nieuw rapportbestand; bestaande bestanden worden geweigerd")
     listing = commands.add_parser("list", help="Toon projecten met .codex-studio.json")
     listing.add_argument("--root", type=Path, default=None, help="Projectroot (standaard: ~/Projects)")
     updates = commands.add_parser("updates", help="Vergelijk project-templateversies met het lokale manifest")
@@ -657,6 +683,38 @@ def main(argv: list[str] | None = None) -> int:
     checking.add_argument("--root", type=Path, default=None, help="Projectroot (standaard: ~/Projects)")
     checking.add_argument("--run-tests", action="store_true", help="Vraag bevestiging voor een toegestane testopdracht")
     args = parser.parse_args(argv)
+    if args.command == "maintenance":
+        previous = sys.dont_write_bytecode
+        try:
+            sys.dont_write_bytecode = True
+            from maintenance import run
+            return run(args.format)
+        finally:
+            sys.dont_write_bytecode = previous
+    if args.command == "benchmark":
+        previous = sys.dont_write_bytecode
+        try:
+            sys.dont_write_bytecode = True
+            from benchmark import run
+            return run(args.projects, args.repeat, args.format)
+        finally:
+            sys.dont_write_bytecode = previous
+    if args.command == "release-check":
+        previous = sys.dont_write_bytecode
+        try:
+            sys.dont_write_bytecode = True
+            from release_check import run
+            return run(args.version, args.run_tests, args.format, args.output)
+        finally:
+            sys.dont_write_bytecode = previous
+    if args.command == "quality":
+        previous = sys.dont_write_bytecode
+        try:
+            sys.dont_write_bytecode = True
+            from quality import run
+            return run(args.run_tests, args.format, args.output)
+        finally:
+            sys.dont_write_bytecode = previous
     if args.command == "restore":
         previous = sys.dont_write_bytecode
         try:
@@ -687,7 +745,7 @@ def main(argv: list[str] | None = None) -> int:
         try:
             results, warnings, missing = project_updates(root)
         except (OSError, ValueError, RecursionError):
-            print_output("Fout: projectroot of lokaal manifest ontbreekt, is ongeldig of onveilig.", file=sys.stderr)
+            log_event("PROJECT_ROOT_INVALID")
             return 1
         except KeyboardInterrupt:
             print_output("Updatescontrole geannuleerd; niets gewijzigd.")
@@ -698,8 +756,8 @@ def main(argv: list[str] | None = None) -> int:
         widths = [max(len(row[i]) for row in rows) for i in range(5)]
         for row in rows:
             print_output("  ".join(row[i].ljust(widths[i]) for i in range(5)) + "  " + row[5])
-        for warning in warnings:
-            print_output("Waarschuwing: " + warning, file=sys.stderr)
+        if warnings:
+            log_event("PROJECT_SCAN_SKIPPED")
         print_output(f"{len(results)} project(en); {missing} map(pen) zonder metadata overgeslagen; {len(warnings)} onveilige/onleesbare paden overgeslagen.")
         return 1 if warnings or any(row.problem for row in results) else 0
     if args.command == "check":
@@ -716,10 +774,10 @@ def main(argv: list[str] | None = None) -> int:
     try:
         projects, warnings = list_projects(root)
     except (OSError, ValueError):
-        print_output("Fout: projectroot ontbreekt, is onleesbaar of bevat een onveilige koppeling.", file=sys.stderr)
+        log_event("PROJECT_ROOT_INVALID")
         return 1
-    for warning in warnings:
-        print_output(f"Waarschuwing: {warning}", file=sys.stderr)
+    if warnings:
+        log_event("PROJECT_SCAN_SKIPPED")
     if not projects:
         print_output("Geen projecten met geldige .codex-studio.json gevonden.")
     else:
@@ -733,6 +791,48 @@ def main(argv: list[str] | None = None) -> int:
             print_output("  ".join(row[i].ljust(widths[i]) for i in range(4)) + "  " + row[4])
     # Een gedeeltelijk overzicht mag niet stilzwijgend als volledig gelden.
     return 1 if warnings else 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    try:
+        return _main(argv)
+    except KeyboardInterrupt:
+        code, status, completion = 130, "SKIP", "cancelled"
+        log_event("COMMAND_CANCELLED")
+    except Exception:
+        code, status, completion = 1, "FAIL", "error"
+        log_event("COMMAND_FAILED")
+    # Noodrapport onafhankelijk van de rapportmodule, ook bij een importfout.
+    args = sys.argv[1:] if argv is None else argv
+    command = args[0] if args else None
+    structured = command in {"quality", "release-check", "benchmark", "maintenance"}
+    output_format = "text"
+    for index, value in enumerate(args):
+        if value == "--format" and index + 1 < len(args):
+            output_format = args[index + 1]
+        elif value.startswith("--format="):
+            output_format = value.split("=", 1)[1]
+    if structured:
+        message = "Uitvoering niet afgerond; geen exceptiontekst of gevoelige context opgenomen."
+        data = {"schema_version": 1, "command": command, "completion": completion,
+                "tests_requested": "--run-tests" in args, "exit_code": code,
+                "summary": {name: int(name == status) for name in ("PASS", "WARN", "FAIL", "SKIP")},
+                "results": [{"status": status, "label": "Uitvoering", "message": message}]}
+        if command == "release-check":
+            data["release"] = {"version": None, "commit": None, "local_ready": False,
+                               "state": "BLOCKED", "published": False,
+                               "manual_checks": []}
+        try:
+            if output_format == "json":
+                print_output(json.dumps(data, ensure_ascii=True))
+            elif output_format == "markdown":
+                print_output(f"# Uitvoering niet afgerond\n\n{status}: {message}\n\nExitcode: {code}")
+            else:
+                print_output(f"{status} Uitvoering: {message}")
+        except Exception:
+            log_event("STDOUT_FAILED")
+            return 3
+    return code
 
 
 if __name__ == "__main__":

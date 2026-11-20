@@ -195,7 +195,7 @@ class StudioTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn(name.encode("utf-8"), result.stdout)
 
-    def test_warning_output_escapes_characters_for_restricted_stream(self):
+    def test_warning_omits_private_names_for_restricted_stream(self):
         from io import BytesIO, TextIOWrapper
         name = "\u6d4b\u8bd5"
         directory, _ = self.project(folder=name)
@@ -205,7 +205,8 @@ class StudioTests(unittest.TestCase):
         with redirect_stdout(StringIO()), redirect_stderr(error):
             self.assertEqual(studio.main(["list", "--root", str(self.root)]), 1)
         error.flush()
-        self.assertIn(b"\\u6d4b\\u8bd5", raw.getvalue())
+        self.assertNotIn(b"\\u6d4b\\u8bd5", raw.getvalue())
+        self.assertNotIn(name.encode("utf-8"), raw.getvalue())
         self.assertIn(b"Waarschuwing", raw.getvalue())
         error.detach()
 
