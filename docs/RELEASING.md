@@ -22,8 +22,9 @@ De aanwezigheid van deze notities bewijst geen gepubliceerde release.
 1. Controleer wijzigingen en gevoelige gegevens. Maak een PR met doelbranch
    `main`; controleer dit expliciet als de standaardbranch anders heet.
 2. Wacht tot beide Windows/Python-testtaken in `Studio tests` slagen voor de
-   actuele PR-commit. Die testen de studio, het zelfstandige Python-template
-   en de alleen-lezen onderhoudscontrole. Er worden geen pakketten geïnstalleerd.
+   actuele PR-commit. Die testen de studio, alle vier zelfstandige templates,
+   de JavaScript-logica en de alleen-lezen onderhoudscontrole. Node.js 22+ moet
+   beschikbaar zijn; er worden geen pakketten geïnstalleerd.
 3. Beoordeel overgeslagen tests en de overige handmatige voorwaarden uit
    [RELEASE.md](RELEASE.md). Een geslaagde CI is geen beveiligingsgarantie.
 4. Merge pas na geslaagde checks en eventuele vereiste reviews. Omzeil geen
@@ -38,8 +39,8 @@ op die branch staan. Controleer dat de tag nog niet bestaat en wijzig nooit
 een bestaande releasetag om een nieuwe versie te publiceren.
 
 Gebruik de bijbehorende changelogsectie voor de releasenotities en beschrijf
-resterende beperkingen. Web-, AI- en automation-templatebronnen die op deze
-branch ontbreken blijven gepland. Vermeld ze niet als werkende generatoropties.
+resterende beperkingen. De vier templates zijn nu hersteld; de AI-demo doet
+geen echte API-aanroepen en automation heeft standaard dry-run.
 Controleer tag, commit, tests en notities; kies pas daarna **Publish release**.
 GitHub maakt standaard broncodearchieven; upload geen lokale gegevensbestanden,
 secrets, rapporten of persoonlijke back-ups als bijlagen.

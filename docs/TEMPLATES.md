@@ -24,8 +24,8 @@ python .\create_project.py mijn-notities --type python --output "$HOME\Projects"
 ```
 
 `--output` is de bovenliggende map, niet de volledige nieuwe projectmap. Gebruik
-de optie altijd: de huidige standaard in de code is `C:/App/Codex/Projects`,
-ondanks de vermelding van `~/Projects` in de helptekst.
+de optie om een andere oudermap te kiezen. Standaard gebruikt de generator
+`~/Projects`; de helptekst toont het werkelijke pad op jouw computer.
 
 Projectnamen hebben 1 tot 64 tekens: kleine ASCII-letters, cijfers en enkele
 koppeltekens. Ze beginnen met een letter en eindigen met een letter of cijfer.
@@ -115,7 +115,7 @@ gebruiken een nagebootst document, geen volledige browser.
 
 `PROJECT_NAME` wordt vervangen in paginatitel, kop en documentatie. Er is geen
 Python-package in het webproject. Dezelfde strikte projectnaamvalidatie geldt
-voor alle types. `WEB_TEMPLATE_FILES` bepaalt welke webbestanden worden gekopieerd.
+voor alle types. De websectie van het manifest bepaalt welke bestanden worden gekopieerd.
 De webworkflow test Node.js 22 en 24 op Windows en Linux met Python 3.11. Hij
 publiceert niets. Zie [de volledige webhandleiding](../templates/web-app/README.md).
 
@@ -184,7 +184,26 @@ Onderzoek eerst de projectregels in
 [het AI-template](../templates/ai-app/AGENTS.md) of
 [het automation-template](../templates/automation/AGENTS.md). Voeg gedrag met tests toe en
 test daarna ook een nieuw gegenereerd project. Nieuwe templatebestanden worden
-niet automatisch gekopieerd: `TEMPLATE_FILES`, `WEB_TEMPLATE_FILES`, `AI_TEMPLATE_FILES`
-en `AUTOMATION_TEMPLATE_FILES` in
-`create_project.py` zijn de expliciete lijsten. Breid ze alleen uit met gecontroleerde bestanden zonder
+niet automatisch gekopieerd: de expliciete lijsten staan centraal in
+[`templates/manifest.json`](../templates/manifest.json). De oude constanten in de
+generator worden daarvan afgeleid voor compatibiliteit. Breid de lijsten alleen uit met gecontroleerde bestanden zonder
 persoonlijke gegevens; zie [veilig werken](SECURITY.md).
+
+## Versies en herkomst
+
+Het manifest gebruikt `schema_version: 1` en per template een versie in de vorm
+`MAJOR.MINOR.PATCH`, aanvankelijk `1.0.0`. Verhoog de templateversie wanneer je
+de geleverde template wijzigt; een versienummer bewaart zelf geen oude bestanden.
+De generator ondersteunt één huidige lokale versie per type. Hij voert geen
+netwerkdownloads of updates van bestaande projecten uit.
+
+`--template-version 1.0.0` eist een exacte overeenkomst met het manifest. Zonder
+de optie wordt de huidige lokale versie gebruikt. Een onbekende versie, ongeldig
+schema of onveilig pad wordt vóór writes geweigerd. Het menu toont de versie en
+weigert een gewijzigde versie na bevestiging in plaats van stilzwijgend door te gaan.
+
+De gegenereerde `.codex-studio.json` legt de gebruikte template-id en -versie,
+generatorversie en projectnamen vast. Dit bestand is herkomstinformatie, geen
+installatiebestand of automatische updater. De projectversie in `pyproject.toml`
+is een apart begrip en blijft door de ontwikkelaar beheerd. Bestaande projecten
+krijgen niet achteraf metadata en worden niet aangepast bij een manifestwijziging.

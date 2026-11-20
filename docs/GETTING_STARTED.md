@@ -43,9 +43,8 @@ PowerShell-variabele; gebruik deze alleen als onderdeel van een pad en verander
 de waarde niet. De bovenliggende map wordt zo nodig aangemaakt. Het project zelf
 mag nog niet bestaan, ook niet als lege map.
 
-Gebruik voorlopig altijd `--output`: zonder die optie gebruikt de huidige code
-`C:/App/Codex/Projects`, hoewel de ingebouwde helptekst `~/Projects` noemt.
-Dit is een bekende afwijking; deze handleiding verandert de generator niet.
+Zonder `--output` gebruikt de generator `Projects` in je thuismap. Met
+`--output` kies je bewust een andere oudermap. De helptekst toont de standaard.
 
 Een alternatief vanuit de studio is:
 

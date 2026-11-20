@@ -108,10 +108,12 @@ class ProjectGeneratorTests(unittest.TestCase):
                 generator.create_project("voorbeeld", self.root)
         self.assertEqual(list((self.root / "voorbeeld").iterdir()), [])
 
-#    def test_default_output_uses_home_projects(self):
-#        with patch.object(generator.Path, "home", return_value=self.root):
-#            target = generator.create_project("voorbeeld-app")
-#        self.assertEqual(target, self.root / "Projects" / "voorbeeld-app")
+    def test_default_output_uses_configured_base_without_writing_outside_test(self):
+        # De bestaande instelling is configureerbaar; tests mogen nooit naar de
+        # echte standaardmap schrijven of een andere standaard afdwingen.
+        with patch.object(generator, "DEFAULT_OUTPUT", self.root / "Projects"):
+            target = generator.create_project("voorbeeld-app")
+        self.assertEqual(target, self.root / "Projects" / "voorbeeld-app")
 
     def test_only_known_files_are_copied(self):
         template = self.template_copy()
@@ -126,7 +128,7 @@ class ProjectGeneratorTests(unittest.TestCase):
         actual = {p.relative_to(target).as_posix() for p in target.rglob("*") if p.is_file()}
         expected = {p.replace("project_package", "schone_app")
                     for p in generator.TEMPLATE_FILES}
-        self.assertEqual(actual, expected)
+        self.assertEqual(actual, expected | {generator.METADATA_FILE})
 
     def test_missing_template_file_leaves_no_project(self):
         with patch.object(generator, "TEMPLATE_DIR", self.root / "ontbreekt"):
@@ -265,7 +267,7 @@ class ProjectGeneratorTests(unittest.TestCase):
         with patch.object(generator, "WEB_TEMPLATE_DIR", template):
             target = generator.create_project("schone-webapp", self.root / "output", project_type="web")
         actual = {p.relative_to(target).as_posix() for p in target.rglob("*") if p.is_file()}
-        self.assertEqual(actual, set(generator.WEB_TEMPLATE_FILES))
+        self.assertEqual(actual, set(generator.WEB_TEMPLATE_FILES) | {generator.METADATA_FILE})
 
     def test_web_missing_source_leaves_no_project(self):
         with patch.object(generator, "WEB_TEMPLATE_DIR", self.root / "ontbreekt"):
@@ -326,7 +328,7 @@ class ProjectGeneratorTests(unittest.TestCase):
             target = generator.create_project("mijn-taak", self.root / "output", project_type="automation")
         actual = {p.relative_to(target).as_posix() for p in target.rglob("*") if p.is_file()}
         expected = {p.replace("project_package", "mijn_taak") for p in generator.AUTOMATION_TEMPLATE_FILES}
-        self.assertEqual(actual, expected)
+        self.assertEqual(actual, expected | {generator.METADATA_FILE})
 
     def test_automation_missing_source_leaves_no_project(self):
         with patch.object(generator, "AUTOMATION_TEMPLATE_DIR", self.root / "ontbreekt"):
@@ -406,7 +408,7 @@ class ProjectGeneratorTests(unittest.TestCase):
         expected = {name.replace("project_package", "veilige_demo")
                     for name in generator.AI_TEMPLATE_FILES}
         actual = {p.relative_to(target).as_posix() for p in target.rglob("*") if p.is_file()}
-        self.assertEqual(actual, expected)
+        self.assertEqual(actual, expected | {generator.METADATA_FILE})
         example = (target / ".env.example").read_text(encoding="utf-8")
         self.assertIn("AI_API_KEY=\n", example)
         self.assertIn("!.env.example", (target / ".gitignore").read_text(encoding="utf-8"))

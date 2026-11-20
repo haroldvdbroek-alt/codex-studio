@@ -73,8 +73,9 @@ worden uitgevoerd, bijvoorbeeld door een te grote Git-administratie.
 
 `ACTUEEL` vergelijkt uitsluitend versienummers in projectmetadata en het lokale
 manifest. Het bewijst geen compatibiliteit, aanwezige templatebronbestanden of
-geslaagde tests. Op deze branch zijn alleen Python-templatebronbestanden
-aanwezig; web, AI en automation staan wel in het manifest. Ontbrekende of
+geslaagde tests. De vier templatebronnen zijn aanwezig en worden via het
+manifest gegenereerd. De AI-demo blijft offline; automation gebruikt standaard
+dry-run. Ontbrekende of
 ongeldige projectmetadata levert een melding op; er wordt niets hersteld.
 
 ## HTTP en browserbeveiliging

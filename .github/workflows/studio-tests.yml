@@ -27,10 +27,7 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python }}
-      - name: Studio unittest-tests
-        run: python -B -m unittest discover -s tests -v
-      - name: Zelfstandige Python-template testen
-        working-directory: templates/python-app
-        run: python -B -m unittest discover -s tests -v
+      - name: Studio, alle zelfstandige templates en JavaScript testen
+        run: python -B run_tests.py
       - name: Alleen-lezen onderhoudscontrole
         run: python -B studio.py maintenance --format json

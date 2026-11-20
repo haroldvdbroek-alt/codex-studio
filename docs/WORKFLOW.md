@@ -29,14 +29,15 @@ voorbeeldpaden hieronder gebruik je alleen als die op jouw computer bestaan.
 | Type | Beschikbaar op deze branch | Aandachtspunten |
 | --- | --- | --- |
 | Python | Template en generator werken. | `src`-layout, absolute imports en unittest-tests zonder pakketinstallatie. |
-| Web | In manifest en controlebeleid; templatebron ontbreekt, herstellen/genereren is gepland. | Lokale HTML/CSS/JavaScript, veilige tekstweergave, toetsenbordbediening en browsertest. |
-| AI | In manifest en controlebeleid; templatebron ontbreekt, herstellen/genereren is gepland. | Configuratie via omgevingsvariabelen; tests met mocks of een nepclient, zonder echte sleutel of API-aanroep. |
-| Automation | In manifest en controlebeleid; templatebron ontbreekt, herstellen/genereren is gepland. | Logging zonder gevoelige inhoud, veilige testmodus en bestandsbewerkingen in tijdelijke mappen. |
+| Web | Template en generator werken. | Lokale HTML/CSS/JavaScript, veilige tekstweergave, toetsenbordbediening en browsertest. |
+| AI | Offline-template en generator werken. | Configuratie via omgevingsvariabelen; tests met mocks of een nepclient, zonder echte sleutel of API-aanroep. |
+| Automation | Template en generator werken. | Logging zonder gevoelige inhoud, veilige testmodus en bestandsbewerkingen in tijdelijke mappen. |
 
 Voor bestaande web-, AI- en automation-projecten geldt deze werkwijze ook,
 maar hun eigen README en aanwezige code bepalen de werkende startopdracht.
-De huidige generator accepteert alleen `--type python`; een vermelding in het
-manifest maakt een ander template nog niet beschikbaar.
+De generator ondersteunt `--type python`, `--type web`, `--type ai` en
+`--type automation`. Zonder argumenten opent een menu; pas na bevestiging
+wordt een nieuw project gemaakt. De standaardoudermap is `$HOME\Projects`.
 
 Een nieuw Python-project kun je vanuit de studiohoofdmap maken met:
 

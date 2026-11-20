@@ -48,8 +48,8 @@ projectnaam. Verwijder de map niet zonder eerst de inhoud en gevolgen te control
 
 ## Het project staat op een onverwachte plek
 
-De huidige code gebruikt zonder `--output` het vaste pad `C:/App/Codex/Projects`.
-Helptekst en docstring noemen nog `~/Projects`; dat is een bekende fout.
+Zonder `--output` wordt `Projects` in je thuismap gebruikt.
+Helptekst en menu tonen die standaard. De tests gebruiken uitsluitend tijdelijke doelmappen.
 Gebruik vanuit de studio bijvoorbeeld:
 
 ```powershell
@@ -88,38 +88,18 @@ Lees de testnaam en de onderste foutmelding. `FAIL` duidt op een niet-gehaalde
 verwachting; `ERROR` op een fout tijdens uitvoeren. Deel bij hulpvragen alleen
 de relevante melding, zonder secrets of onnodige persoonlijke paden.
 
-De generator-suite bevat momenteel één bekende fout:
-`test_default_output_uses_home_projects`. De hardcoded uitvoermap omzeilt de
-nagebootste thuismap van de test. De volledige suite kan daardoor een echte map
-`C:/App/Codex/Projects/voorbeeld-app` proberen aan te maken. Voer die suite pas
-normaal uit nadat dit gedrag is hersteld en gecontroleerd.
-
-Voorlopig kun je vanuit de studiohoofdmap de overige tests uitvoeren met deze
-eenmalige PowerShell-opdracht. Dit wijzigt geen testbestand:
+De oude standaardmap-test is vervangen door een controle met een tijdelijk
+ingestelde doelmap. De standaard is `~/Projects`. Je hoeft geen
+test meer uit te sluiten. Voer vanuit de studiohoofdmap de volledige controle uit:
 
 ```powershell
-@'
-import sys
-import unittest
-from pathlib import Path
-sys.path.insert(0, str(Path("tests").resolve()))
-import test_create_project
-suite = unittest.defaultTestLoader.loadTestsFromTestCase(
-    test_create_project.ProjectGeneratorTests
-)
-selected = unittest.TestSuite(
-    test for test in suite
-    if test._testMethodName != "test_default_output_uses_home_projects"
-)
-print("LET OP: de bekende standaardmap-test is uitgesloten.")
-result = unittest.TextTestRunner(verbosity=2).run(selected)
-raise SystemExit(not result.wasSuccessful())
-'@ | python -B -
+python -B run_tests.py
 ```
 
-Dit is een beperkte controle, geen volledig geslaagde suite. Echte symlink-tests
-kunnen daarnaast `skipped` tonen als Windows geen koppelingen toestaat. Verander
-geen rechten of beveiligingsinstellingen alleen om die tests groen te krijgen.
+De opdracht meldt een fout als Node.js ontbreekt of een suite mislukt. Echte
+symlink-tests kunnen op Windows nog `skipped` tonen als koppelingen niet zijn
+toegestaan. Controleer de gemelde skips en de resultaten van GitHub Actions.
+Verander geen beveiligingsinstellingen alleen om een test groen te krijgen.
 
 De oorspronkelijke app kun je onafhankelijk controleren. Start vanuit de
 studiohoofdmap:
