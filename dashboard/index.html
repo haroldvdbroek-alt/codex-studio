@@ -8,22 +8,48 @@
   <script src="/static/app.js" defer></script>
 </head>
 <body>
+  <a class="skip-link" href="#projectlijst">Naar de projecten</a>
   <header><span class="brand">CODEX STUDIO</span><span class="badge">Lokaal · Alleen lezen</span></header>
   <main>
     <p class="eyebrow">Je ontwikkelwerkplek</p>
     <h1>Projecten in beeld</h1>
-    <p class="intro">Bekijk configuratie, Git-status en lokale templateversies. Er worden geen projecttests uitgevoerd.</p>
+    <p class="intro">Al je geregistreerde projecten op één plek. Bekijk configuratie, Git en templateversies zonder bestanden te wijzigen.</p>
+    <section class="summary" aria-label="Samenvatting van het opgehaalde overzicht">
+      <article><span>Geregistreerde projecten</span><strong id="total">—</strong><small>Binnen de ingestelde projectroot</small></article>
+      <article><span>Aandachtspunten</span><strong id="attention">—</strong><small>Configuratie, Git of templateversies</small></article>
+      <article><span>Template-updates</span><strong id="updates">—</strong><small>Nieuwe lokale templateversie beschikbaar</small></article>
+    </section>
     <div class="toolbar"><p id="state" role="status">Overzicht laden…</p><button id="refresh" type="button">Overzicht ophalen</button></div>
     <ul id="warnings" aria-label="Aandachtspunten"></ul>
-    <div class="table-wrap">
+    <section id="projectlijst" aria-labelledby="list-title" tabindex="-1">
+      <h2 id="list-title">Je projecten</h2>
+      <div class="filters">
+        <label>Zoek op projectnaam<input id="search" type="search" placeholder="Bijvoorbeeld mijn-notities" maxlength="100" autocomplete="off"></label>
+        <label>Projecttype<select id="type-filter"><option value="">Alle types</option><option value="python">Python</option><option value="web">Web</option><option value="ai">AI</option><option value="automation">Automation</option><option value="ONBEKEND">Onbekend</option></select></label>
+        <label>Status<select id="status-filter"><option value="">Alle statussen</option><option value="attention">Aandacht nodig</option><option value="updates">Update beschikbaar</option><option value="ready">Bekende controles in orde</option></select></label>
+        <button id="reset-filters" type="button" class="secondary">Filters wissen</button>
+      </div>
+      <p id="result-count" role="status" aria-live="polite"></p>
+      <div class="table-wrap">
       <table>
         <caption>Geregistreerde projecten</caption>
-        <thead><tr><th scope="col">Project</th><th scope="col">Type</th><th scope="col">Template</th><th scope="col">Lokaal</th><th scope="col">Update</th><th scope="col">Configuratie</th><th scope="col">Git</th><th scope="col">Tests</th></tr></thead>
+        <thead><tr><th scope="col">Project</th><th scope="col">Type</th><th scope="col">Template</th><th scope="col">Lokaal</th><th scope="col">Update</th><th scope="col">Configuratie</th><th scope="col">Git</th><th scope="col">Tests</th><th scope="col">Details</th></tr></thead>
         <tbody id="projects"></tbody>
       </table>
-    </div>
-    <p id="empty" hidden>Geen projecten in dit resultaat. Controleer eventuele meldingen hierboven.</p>
-    <footer>PASS: controle geslaagd. WARN: aandachtspunt, bijvoorbeeld wijzigingen of geen eigen Git-repository. FAIL: controle mislukt. SKIP: controle overgeslagen.<br>Automatische controle 30 seconden na iedere afgeronde scan; een nieuwe controle kan tot circa 12 seconden duren. ACTUEEL vergelijkt versienummers en bevestigt geen compatibiliteit. Stop de server in PowerShell met Ctrl+C.</footer>
+      </div>
+      <p id="empty" class="notice" hidden></p>
+    </section>
+    <section id="details" class="details" aria-labelledby="details-title" tabindex="-1" hidden>
+      <div class="toolbar"><h2 id="details-title">Projectdetails</h2><button id="close-details" class="secondary" type="button">Details sluiten</button></div>
+      <dl id="detail-fields"></dl>
+      <p>Deze gegevens komen uit de laatste scan. Tests zijn niet uitgevoerd; een groene configuratie of Git-status bewijst geen werkende app.</p>
+    </section>
+    <section class="legend" aria-labelledby="legend-title">
+      <h2 id="legend-title">Wat betekenen de statussen?</h2>
+      <p><strong>PASS</strong>: deze controle slaagt. <strong>WARN</strong>: aandachtspunt, zoals lokale wijzigingen of geen eigen Git-repository. <strong>FAIL</strong>: controle mislukt. <strong>SKIP</strong>: niet beoordeeld.</p>
+      <p>Template-updates gaan alleen over lokale versienummers. Een grote wijziging vraagt extra beoordeling. Alle tests blijven <strong>NIET_UITGEVOERD</strong>.</p>
+    </section>
+    <footer>Automatische controle 30 seconden na iedere afgeronde scan; een nieuwe controle kan tot circa 12 seconden duren. ACTUEEL vergelijkt versienummers en bevestigt geen compatibiliteit. Stop de server in PowerShell met Ctrl+C.</footer>
   </main>
 </body>
 </html>

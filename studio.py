@@ -646,14 +646,19 @@ def bounded_integer(value, lower, upper):
 
 
 def _main(argv: list[str] | None = None) -> int:
+    arguments = sys.argv[1:] if argv is None else argv
+    if not arguments:
+        arguments = ["menu"]
     parser = SafeArgumentParser(prog="studio.py", description="Bekijk en controleer projecten; back-up en herstel alleen na bevestiging.")
     commands = parser.add_subparsers(dest="command", required=True)
+    menu = commands.add_parser("menu", help="Open het interactieve menu; risicovolle acties vereisen bevestiging")
+    menu.add_argument("--root", type=Path, default=None, help="Projectroot voor projectacties")
     maintenance = commands.add_parser("maintenance", help="Controleer studio-onderhoud alleen-lezen; geen reparaties of testuitvoering")
-    maintenance.add_argument("--format", choices=("text", "json", "markdown"), default="text")
+    maintenance.add_argument("--format", choices=("text", "json", "markdown"), default="text", help="Rapportvorm op stdout (standaard: text)")
     benchmark = commands.add_parser("benchmark", help="Meet list/updates/check uitsluitend met tijdelijke fictieve projecten")
-    benchmark.add_argument("--projects", type=lambda value: bounded_integer(value, 4, 200), default=12)
-    benchmark.add_argument("--repeat", type=lambda value: bounded_integer(value, 1, 10), default=3)
-    benchmark.add_argument("--format", choices=("text", "json", "markdown"), default="text")
+    benchmark.add_argument("--projects", type=lambda value: bounded_integer(value, 4, 200), default=12, help="Aantal fictieve projecten: 4 tot en met 200 (standaard: 12)")
+    benchmark.add_argument("--repeat", type=lambda value: bounded_integer(value, 1, 10), default=3, help="Aantal metingen per onderdeel: 1 tot en met 10 (standaard: 3)")
+    benchmark.add_argument("--format", choices=("text", "json", "markdown"), default="text", help="Rapportvorm op stdout (standaard: text)")
     quality = commands.add_parser("quality", help="Controleer de studio alleen-lezen; start tests uitsluitend na bevestiging")
     quality.add_argument("--run-tests", action="store_true", help="Vraag toestemming voor de vaste studio-testsuite")
     quality.add_argument("--format", choices=("text", "json", "markdown"), default="text", help="Rapportvorm op stdout (standaard: text)")
@@ -661,17 +666,17 @@ def _main(argv: list[str] | None = None) -> int:
     release = commands.add_parser("release-check", help="Lokale releasevoorcontrole; publiceert nooit en laat externe controles handmatig open")
     release.add_argument("--version", help="Expliciete studiokandidaat MAJOR.MINOR.PATCH; geen versie wordt geraden")
     release.add_argument("--run-tests", action="store_true", help="Vraag toestemming voor de vaste lokale studio-testsuite")
-    release.add_argument("--format", choices=("text", "json", "markdown"), default="text")
+    release.add_argument("--format", choices=("text", "json", "markdown"), default="text", help="Rapportvorm op stdout (standaard: text)")
     release.add_argument("--output", type=Path, help="Optioneel nieuw rapportbestand; bestaande bestanden worden geweigerd")
     listing = commands.add_parser("list", help="Toon projecten met .codex-studio.json")
-    listing.add_argument("--root", type=Path, default=None, help="Projectroot (standaard: ~/Projects)")
+    listing.add_argument("--root", type=Path, default=None, help="Oudermap van je projecten (standaard: ~/Projects)")
     updates = commands.add_parser("updates", help="Vergelijk project-templateversies met het lokale manifest")
-    updates.add_argument("--root", type=Path, default=None, help="Projectroot (standaard: ~/Projects)")
+    updates.add_argument("--root", type=Path, default=None, help="Oudermap van je projecten (standaard: ~/Projects)")
     dashboard = commands.add_parser("dashboard", help="Start het lokale alleen-lezen browserdashboard")
-    dashboard.add_argument("--root", type=Path, default=None, help="Projectroot (standaard: ~/Projects)")
+    dashboard.add_argument("--root", type=Path, default=None, help="Oudermap van je projecten (standaard: ~/Projects)")
     backup = commands.add_parser("backup", help="Toon veilige broncode-selectie; aanmaken alleen met --create en bevestiging")
     backup.add_argument("project", help="Directe projectmapnaam onder de root")
-    backup.add_argument("--root", type=Path, default=None, help="Projectroot (standaard: ~/Projects)")
+    backup.add_argument("--root", type=Path, default=None, help="Oudermap van je projecten (standaard: ~/Projects)")
     backup.add_argument("--output", type=Path, default=None, help="Lokale back-upmap (standaard: ~/StudioBackups)")
     backup.add_argument("--create", action="store_true", help="Vraag na het overzicht expliciete toestemming om ZIP te maken")
     restore = commands.add_parser("restore", help="Verifieer Studio-ZIP; herstel alleen naar een nieuwe map na bevestiging")
@@ -680,9 +685,17 @@ def _main(argv: list[str] | None = None) -> int:
     restore.add_argument("--create", action="store_true", help="Vraag na verificatie en overzicht expliciete toestemming voor herstel")
     checking = commands.add_parser("check", help="Controleer metadata, templateconfiguratie en Git-status")
     checking.add_argument("project", help="Directe projectmapnaam onder de root")
-    checking.add_argument("--root", type=Path, default=None, help="Projectroot (standaard: ~/Projects)")
+    checking.add_argument("--root", type=Path, default=None, help="Oudermap van je projecten (standaard: ~/Projects)")
     checking.add_argument("--run-tests", action="store_true", help="Vraag bevestiging voor een toegestane testopdracht")
-    args = parser.parse_args(argv)
+    args = parser.parse_args(arguments)
+    if args.command == "menu":
+        previous = sys.dont_write_bytecode
+        try:
+            sys.dont_write_bytecode = True
+            from studio_menu import run
+            return run(args.root)
+        finally:
+            sys.dont_write_bytecode = previous
     if args.command == "maintenance":
         previous = sys.dont_write_bytecode
         try:

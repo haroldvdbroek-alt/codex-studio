@@ -6,6 +6,11 @@ taak de [projectchecklist](PROJECT_CHECKLIST.md). De afspraken uit
 
 ## 1. Kies het juiste project
 
+Gebruik vanuit de studio `python .\studio.py menu --root "C:\App\Codex\Projects"`
+voor een interactief overzicht van bestaande functies. Lees [MENU.md](MENU.md)
+voor bevestigingen en annuleren; tests, herstel en schrijfacties worden nooit
+automatisch bevestigd. Directe CLI-opdrachten blijven beschikbaar.
+
 Open in VS Code de projectmap via **Bestand > Map openen**. Open daarna een
 PowerShell-terminal via **Terminal > Nieuwe terminal**. Controleer waar je bent:
 
@@ -113,10 +118,13 @@ over; installeer niet automatisch een pakket om een importfout te verbergen.
 | AI | Controleer dat de tests echte clients vervangen door mocks/nepclients en zonder echte API-sleutel slagen. Een unittest-opdracht alleen garandeert geen offline tests. |
 | Automation | Gebruik tijdelijke bron- en doelmappen. Test dat de veilige modus niets wijzigt, bestaande doelen behouden blijven en fouten netjes worden gelogd. Gebruik alleen de testmodus/startvlag die de eigen README daadwerkelijk beschrijft. |
 
-Er is op deze branch geen geverifieerde algemene startopdracht voor AI of
-automation. Voer dus geen verzonnen `--dry-run`- of `--apply`-vlag uit.
-Pas echte bestandsbewerkingen pas toe nadat invoer, doel en gevolgen duidelijk
-zijn en de gebruiker de schrijfactie heeft toegestaan.
+Voor AI en automation staan werkende startinstructies in hun eigen README.
+De AI-demo gebruikt alleen een offline nepclient. Automation heeft standaard
+dry-run; `--apply` vraagt echte uitvoer naar een nieuwe doelmap aan. Lees eerst
+de [AI-handleiding](../templates/ai-app/README.md) of
+[automation-handleiding](../templates/automation/README.md). Pas echte
+bestandsbewerkingen pas toe nadat invoer, doel en gevolgen duidelijk zijn
+en de gebruiker de schrijfactie heeft toegestaan.
 
 ## 5. Controleer via de studio
 

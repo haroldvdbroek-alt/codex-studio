@@ -32,8 +32,8 @@ De aanwezigheid van deze notities bewijst geen gepubliceerde release.
 
 ## De gecontroleerde main-commit publiceren
 
-Gebruik in GitHub **Releases → Draft a new release**. Kies een nieuwe tag,
-bijvoorbeeld `v1.1.0`, en selecteer als target exact de gecontroleerde commit
+Gebruik in GitHub **Releases → Draft a new release**. Kies een nieuwe tag met
+de bewust gekozen, nog niet bestaande versie. Selecteer als target exact de gecontroleerde commit
 op `main`. De standaardbranch kan anders zijn: laat het target niet onbewust
 op die branch staan. Controleer dat de tag nog niet bestaat en wijzig nooit
 een bestaande releasetag om een nieuwe versie te publiceren.

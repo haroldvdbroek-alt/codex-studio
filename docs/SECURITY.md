@@ -90,6 +90,14 @@ Alleen deze GET-routes zijn beschikbaar:
 | `/static/app.js` | Lokale JavaScript |
 | `/api/projects` | Laatste overzicht als JSON |
 
+Zoeken, type-/statusfilters, samenvattingen en projectdetails gebruiken uitsluitend
+de laatste snapshot in de browser. Ze starten geen serveropdrachten en veranderen
+geen bestanden. Dynamische namen, waarschuwingen en detailvelden worden als
+tekst weergegeven; er worden geen metadatawaarden als HTML, URL of CSS gebruikt.
+Bij een verbindings- of gegevensfout verdwijnen eerdere resultaten uit beeld.
+Een groene configuratie/Git-status is geen testbewijs; tests blijven altijd
+`NIET_UITGEVOERD`.
+
 Andere routes en queryparameters worden geweigerd. Andere HTTP-methoden geven
 405 of 404; er is geen mapweergave of algemene bestandsserver. De projectroot
 kan alleen bij het starten via de terminal worden gekozen, niet via een URL.
@@ -141,6 +149,14 @@ de gecontroleerde `pyproject.toml` wordt wel als configuratie gelezen.
 Projectpaden en ruwe subprocessuitvoer worden niet via de API aangeboden.
 
 ## Centrale logging en gevoelige gegevens
+
+Het [interactieve menu](MENU.md) delegeert aan de bestaande functies. Het
+vraagt standaard geen tests, herstel of schrijfacties aan. Optionele acties
+houden hun bestaande waarschuwing en laatste bevestiging; de benchmark krijgt
+ook toestemming vóór tijdelijke bestanden worden gemaakt. Er worden geen
+shell-commandotekst of installaties via het menu gestart. Bestaande alleen-lezen
+Git-controles blijven mogelijk; Git-geschiedenis en repository-instellingen
+worden niet gewijzigd.
 
 `studio.py maintenance` gebruikt uitsluitend lokale, begrensde leescontroles van
 de studio zelf. De opdracht start geen Git, subprocessen, tests of netwerkverkeer

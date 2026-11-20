@@ -307,5 +307,5 @@ if __name__ == "__main__":
     else:
         import argparse
         parser = SafeArgumentParser(prog="dashboard.py", description="Lokaal Codex Studio-dashboard")
-        parser.add_argument("--root", type=Path, default=Path.home() / "Projects")
+        parser.add_argument("--root", type=Path, default=Path.home() / "Projects", help="Oudermap van projecten (standaard: ~/Projects)")
         sys.exit(serve(parser.parse_args().root))

@@ -1,5 +1,35 @@
 # Problemen oplossen
 
+## Nederlandstalige hulp en foutmeldingen
+
+Vraag hulp op voor de opdracht die je wilt gebruiken:
+
+```powershell
+python .\studio.py --help
+python .\studio.py backup --help
+python .\studio.py restore --help
+python .\create_project.py --help
+```
+
+`Gebruik`, `Argumenten` en `Opties` leggen de opdracht uit. Namen in hoofdletters
+in een voorbeeld, zoals `PROJECTROOT`, zijn plaatsaanduidingen: vervang ze door
+je eigen waarden. `PROJECT` is een directe projectmapnaam; `--root` is de
+oudermap waarin je projecten staan. `--output` betekent bij backup de back-upmap
+en bij restore de nieuwe herstelmap. `--destination` is geen ondersteunde optie.
+
+Een invoerfout geeft een vaste gebeurteniscode, een Nederlandse uitleg, de
+gebruiksregel en een voorbeeld op stderr. De foutmelding vermeldt ontbrekende
+argumenten, onbekende opties, ongeldige keuzen of ontbrekende waarden zonder je
+ingevoerde waarden te herhalen. Er wordt dan geen actie gestart; exitcode 2
+blijft ongewijzigd en stdout bevat geen JSON-rapport.
+
+De bestaande commandonamen, opties, gebeurteniscodes, exitcodes en JSON-velden
+blijven gelijk. JSON-resultaten staan uitsluitend op stdout; meldingen op stderr.
+Gebruik bij automatische verwerking de exitcode en JSON-velden, niet de exacte
+Nederlandse tekst. Deel bij hulpvragen de gebeurteniscode; deel geen secrets,
+ruwe configuratie of persoonlijke paden. Algemene uitvoerfouten geven mogelijke
+vervolgstappen, geen verzonnen specifieke oorzaak.
+
 Lees foutmeldingen van boven naar beneden en controleer eerst de huidige map.
 Installeer of verwijder niet op goed geluk iets om een melding te laten verdwijnen.
 

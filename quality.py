@@ -25,7 +25,7 @@ REQUIRED = ("AGENTS.md", "README.md", "studio.py", "create_project.py", "process
             "docs/BACKUPS.md", "docs/RESTORE.md", "docs/QUALITY.md",
             "scripts/run-quality.ps1", "docs/TASK_SCHEDULER.md", "release_check.py",
             "CHANGELOG.md", "docs/RELEASE.md", "benchmark.py", "docs/BENCHMARK.md",
-            "maintenance.py", "docs/MAINTENANCE.md")
+            "maintenance.py", "docs/MAINTENANCE.md", "studio_menu.py", "docs/MENU.md")
 PLANNED = {"web", "ai", "automation"}
 
 
