@@ -5,12 +5,12 @@ versie zie [de publicatiehandleiding](docs/RELEASING.md).
 
 Codex Development Studio is een herbruikbare werkmap met afspraken voor samenwerken met Codex aan software. De afspraken zijn bruikbaar voor verschillende programmeertalen en soorten projecten.
 
-Deze studio bevat ontwikkelafspraken, een Python-template en een generator voor nieuwe projecten. De generator gebruikt alleen de Python-standaardbibliotheek. Je hebt Python 3.11 of hoger nodig, maar hoeft geen pakketten te installeren.
+Deze studio bevat ontwikkelafspraken en een generator voor Python-, web-, AI- en automation-projecten. De generator gebruikt alleen de Python-standaardbibliotheek. Je hebt Python 3.11 of hoger nodig; voor de JavaScript-tests ook Node.js 22 of hoger. Er zijn geen pakketinstallaties nodig.
 
 Begin met de [workflowhandleiding voor Windows](docs/WORKFLOW.md) en gebruik de
 [herbruikbare projectchecklist](docs/PROJECT_CHECKLIST.md) bij iedere taak.
 Beide behandelen Python, web, AI en automation en maken onderscheid tussen
-werkende functies en nog geplande templates.
+de mogelijkheden en beperkingen van de vier werkende templates.
 
 ## Eerst een back-upoverzicht bekijken
 
@@ -280,7 +280,7 @@ python -B -m unittest discover -s tests -p "test_studio*.py" -v
 | `docs/` | Workflowhandleiding, herbruikbare projectchecklist en beveiligingsuitleg. |
 | `create_project.py` | Maakt een zelfstandig Python-project op basis van het template. |
 | `tests/` | Automatische tests voor de generator. |
-| `templates/` | Startsjablonen; alleen het Python-template is al ingevuld. |
+| `templates/` | Werkende starttemplates voor Python, web, AI en automation. |
 | `templates/ai-app/` | Gereserveerd voor toepassingen met AI. |
 | `templates/automation/` | Gereserveerd voor automatiseringen. |
 | `templates/python-app/` | Werkend Python-template met src-layout, tests en GitHub Actions. |
@@ -305,9 +305,14 @@ Open een terminal in de hoofdmap van deze studio en voer uit:
 python create_project.py mijn-notities --type python
 ```
 
-Deze generator gebruikt op deze branch standaard `C:\App\Codex\Projects`.
+Deze generator gebruikt standaard `Projects` in je thuismap (`$HOME\Projects`).
 Gebruik `--output` om de bovenliggende map expliciet te kiezen. De package heet
 `mijn_notities`: koppeltekens worden underscores, zodat Python de naam kan importeren.
+
+De andere types werken met `--type web`, `--type ai` en `--type automation`.
+Met `python create_project.py` open je het interactieve menu. Nieuwe projecten
+krijgen `.codex-studio.json`, zodat `studio.py list`, `check` en `updates` ze
+herkennen. Zie [templates gebruiken](docs/TEMPLATES.md).
 
 Je kunt een andere bovenliggende map kiezen:
 

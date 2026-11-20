@@ -2,7 +2,12 @@
 
 ## [Unreleased]
 
-Nog geen wijzigingen na de kandidaat 1.1.0 vastgelegd.
+- Betrouwbaardere procesboomtest en gecontroleerde verwachte foutlogs in tests.
+- Oudere automation-, manifest- en release-workflow-branches geïntegreerd:
+  vier werkende templates, interactief menu en generatie via het centrale manifest.
+- Nieuwe projecten krijgen `.codex-studio.json`, zodat list/check/updates ze
+  herkennen. Bestaande projectmappen blijven ongewijzigd.
+- Volledige testworkflow voor studio, alle templates en JavaScript hersteld.
 
 ## [1.1.0]
 

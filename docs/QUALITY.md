@@ -36,8 +36,9 @@ geen tests en registreert geen taak; de planning maak je uitsluitend zelf.
   en veilige relatieve paden. Ongeldige ongebruikte manifestregels geven ook FAIL.
 - Alle in een aanwezige template gedeclareerde bestanden worden gecontroleerd.
   Ontbrekende Python-bron of een onvolledige aanwezige template geeft FAIL.
-  Web-, AI- en automation-bronnen die op deze branch nog ontbreken geven WARN:
-  hun status is gepland, geen bevestiging van een werkend template.
+  Alle vier templatebronnen zijn op deze branch aanwezig. Het bestaande
+  controlebeleid geeft bij ontbrekende web-, AI- of automation-bronnen WARN;
+  zo'n melding is geen bevestiging van een compleet template.
 - Python-bestanden rechtstreeks in de studiohoofdmap, onder `tests` en in de
   gedeclareerde templatebestanden worden met `ast.parse` op syntaxis gecontroleerd.
   De modules worden niet geïmporteerd of uitgevoerd. Alleen syntaxfouten en
