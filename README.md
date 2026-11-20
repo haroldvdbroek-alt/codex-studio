@@ -1,5 +1,14 @@
 # Codex Development Studio
 
+Nieuw hier? Volg de [complete gebruikershandleiding in tien stappen](docs/GETTING_STARTED.md):
+van Windows en het menu tot projecten, tests, dashboard, back-up, herstel en
+handmatig publiceren. Pas de voorbeeldpaden aan jouw computer aan.
+
+Start het interactieve hoofdmenu met `python .\studio.py`, of gebruik
+`python .\studio.py menu --root "C:\App\Codex\Projects"`.
+Het menu hergebruikt bestaande functies en vraagt expliciete bevestiging voor
+tests en schrijfacties. Zie [het veilige hoofdmenu](docs/MENU.md).
+
 Voor het samenvoegen na geslaagde CI en het bewust publiceren van een nieuwe
 versie zie [de publicatiehandleiding](docs/RELEASING.md).
 
@@ -87,6 +96,16 @@ of installaties gestart. De achtergrondcontrole gebruikt alleen-lezen
 controles en vaste Git-opdrachten. De browser kan uitsluitend het laatste
 overzicht ophalen en kan geen opdrachten uitvoeren of projectbestanden wijzigen.
 Er zijn geen externe pakketten, CDN's of externe browserverzoeken nodig.
+
+De startpagina vat het laatste overzicht samen in aantallen projecten,
+aandachtspunten en template-updates. Zoek op naam of filter op type en status;
+dit gebeurt lokaal in de browser. Met **Bekijken** open je projectdetails zonder
+extra opdracht of verzoek. Sluit met de knop of Escape. Filters en details
+blijven behouden zolang de snapshot niet verandert. Een lopende of onvolledige
+scan en verbindingsproblemen krijgen aparte meldingen; na een fout worden geen
+verouderde projectgegevens getoond. Bekijk de waarschuwingen bij een onvolledig
+overzicht: alleen geregistreerde projecten in de gekozen root en binnen de
+scanlimieten kunnen worden weergegeven.
 
 Lees [veilig gebruik en beperkingen](docs/SECURITY.md) voor routes,
 beveiligingsheaders, scanlimieten en uitleg van de statussen. Dit dashboard is
