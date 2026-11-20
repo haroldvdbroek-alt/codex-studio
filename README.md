@@ -1,5 +1,8 @@
 # Codex Development Studio
 
+Voor het samenvoegen na geslaagde CI en het bewust publiceren van een nieuwe
+versie zie [de publicatiehandleiding](docs/RELEASING.md).
+
 Codex Development Studio is een herbruikbare werkmap met afspraken voor samenwerken met Codex aan software. De afspraken zijn bruikbaar voor verschillende programmeertalen en soorten projecten.
 
 Deze studio bevat ontwikkelafspraken, een Python-template en een generator voor nieuwe projecten. De generator gebruikt alleen de Python-standaardbibliotheek. Je hebt Python 3.11 of hoger nodig, maar hoeft geen pakketten te installeren.

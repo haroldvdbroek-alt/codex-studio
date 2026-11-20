@@ -51,9 +51,10 @@ codevoorbeeld telt niet. De datum en de inhoudelijke juistheid van notities
 blijven handmatig te beoordelen. Een lege sectie of een losse placeholder
 zoals `TODO` telt niet als release-notitie.
 
-De huidige changelog bevat alleen `Unreleased`. Dat is bewust geen verzonnen
-releasegeschiedenis. Templateversie `1.0.0` en eerder administratief op `1.0.0`
-gezette projectmetadata bewijzen geen gepubliceerde studioversie.
+De changelog kan een kandidaatsectie bevatten voordat die versie is gepubliceerd.
+Controleer bestaande releases en tags voor de feitelijke publicatiegeschiedenis.
+Templateversie `1.0.0` en administratief ingevulde projectmetadata bewijzen geen
+gepubliceerde studioversie. Zie [handmatig publiceren](RELEASING.md).
 
 Beoordeel wijzigingen en leg ze alleen op eigen opdracht vast via de
 [Git-workflow](WORKFLOW.md). De releasecontrole maakt zelf geen commit. Als de

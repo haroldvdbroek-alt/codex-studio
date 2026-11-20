@@ -2,20 +2,26 @@
 
 ## [Unreleased]
 
-Deze sectie beschrijft aanwezige functies die nog geen gepubliceerde studioversie
-hebben. Er wordt geen releasegeschiedenis of studio-releaseversie verzonnen.
+Nog geen wijzigingen na de kandidaat 1.1.0 vastgelegd.
 
-- Projectgeneratie voor Python en lokale projectoverzichten en controles.
-- Lokale templateversievergelijking en een alleen-lezen browserdashboard.
-- Broncodeback-up en herstel naar een nieuwe map, na expliciete bevestiging.
-- Quality-controles met optionele tests en veilige tekst-, JSON- en Markdownrapporten.
-- PowerShell-script voor een handmatig door de gebruiker in te richten Windows-taak.
-- Lokale releasevoorcontrole met expliciet openstaande handmatige externe controles.
-- Alleen-lezen maintenance-controle met aparte vaststellingen en aanbevelingen;
-  testdekking wordt niet uit het bestaan van testbestanden afgeleid.
+## [1.1.0]
 
-Web-, AI- en automation-templatebronnen ontbreken op deze branch en zijn gepland;
-een manifestvermelding bewijst geen beschikbare generator of complete template.
+Compatibele uitbreiding ten opzichte van de gepubliceerde tag v1.0.0:
 
-Voor een bewust gekozen kandidaat voeg je zelf een sectie `## [MAJOR.MINOR.PATCH]`
-met beoordeelde notities toe. Dat is op zichzelf geen publicatie of goedkeuring.
+- Lokale projectdetectie, veilige configuratie/Git-controles, template-updates
+  en een alleen-lezen browserdashboard.
+- Veilige broncodeback-ups en geverifieerd herstel naar uitsluitend nieuwe mappen.
+- Quality- en lokale releasecontroles, JSON/Markdown-rapporten en optionele tests.
+- PowerShell-ondersteuning voor een uitsluitend handmatig in te stellen Windows-taak.
+- Benchmark met tijdelijke fictieve projecten, centrale logging naar stderr
+  zonder standaard logbestanden en alleen-lezen maintenance-controles.
+- CI-tests voor Windows met Python 3.11 en 3.13 en een handmatige publicatiehandleiding.
+
+De Python-generator blijft beschikbaar. Web-, AI- en automation-templatebronnen
+ontbreken op deze branch en blijven gepland. Aanwezige tests bewijzen geen
+testdekking; maintenance doet daarover geen automatische uitspraak.
+
+## [1.0.0]
+
+- Gepubliceerde basis met Python-template en Python-projectgenerator,
+  overeenkomstig de bestaande tag v1.0.0.
