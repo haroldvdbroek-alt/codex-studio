@@ -8,6 +8,19 @@ import re
 import stat
 import sys
 
+_previous_bytecode_setting = sys.dont_write_bytecode
+try:
+    sys.dont_write_bytecode = True
+    # Ook bij python -I: voeg uitsluitend de eigen vertrouwde scriptmap toe.
+    _studio_directory = str(Path(__file__).resolve().parent)
+    sys.path.insert(0, _studio_directory)
+    try:
+        from studio_logging import log_event, SafeArgumentParser
+    finally:
+        sys.path.pop(0)
+finally:
+    sys.dont_write_bytecode = _previous_bytecode_setting
+
 
 TEMPLATE_DIR = Path(__file__).resolve().parent / "templates" / "python-app"
 # Alleen gecontroleerde templatebestanden. Nieuwe bestanden worden niet vanzelf
@@ -124,7 +137,7 @@ def create_project(project_name: str, output: Path | str | None = None) -> Path:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
+    parser = SafeArgumentParser(prog="create_project.py",
         description="Maak een nieuw Python-project met alleen de standaardbibliotheek."
     )
     parser.add_argument("name", help="Projectnaam, bijvoorbeeld mijn-notities")
@@ -136,8 +149,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         target = create_project(args.name, args.output)
-    except (OSError, ValueError, UnicodeError) as error:
-        print(f"Fout: {error}", file=sys.stderr)
+    except KeyboardInterrupt:
+        log_event("COMMAND_CANCELLED")
+        return 130
+    except Exception:
+        log_event("GENERATOR_FAILED")
         return 1
     print(f"Project aangemaakt: {target}")
     print("Ga naar deze map en voer uit: python -m unittest discover -s tests -v")

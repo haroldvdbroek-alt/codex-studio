@@ -12,6 +12,18 @@ het script vanuit een andere werkmap aanroept. Er zijn geen `--root`,
 `--project`, installatie-, herstel- of automatische reparatieopties.
 Gebruik `studio.py check PROJECT --root ...` voor een geregistreerd project.
 
+Resultaten staan op stdout; centrale logmeldingen staan op stderr en maken
+standaard geen bestanden. Zo blijft dit een geldig JSON-rapport:
+
+```powershell
+python -B .\studio.py quality --format json
+```
+
+Voeg `--output .\quality-result.json` toe als je bewust een nieuw rapportbestand
+wilt bewaren. Een bestaand bestand wordt geweigerd. Voeg stderr niet samen met
+stdout (`2>&1`) als een programma de JSON moet lezen. Zie de
+[logging- en privacyafspraken](SECURITY.md) voor de foutcodes en beperkingen.
+
 Voor een door jou ingestelde terugkerende controle zie je de
 [PowerShell- en Taakplanner-handleiding](TASK_SCHEDULER.md). Het script start
 geen tests en registreert geen taak; de planning maak je uitsluitend zelf.

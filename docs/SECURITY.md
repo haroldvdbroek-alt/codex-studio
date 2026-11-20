@@ -1,5 +1,10 @@
 # Veilig werken met het lokale dashboard
 
+De [benchmark](BENCHMARK.md) gebruikt uitsluitend zelfgemaakte tijdelijke
+fictieve projecten. Hij accepteert geen projectroot, start geen projectcode of
+tests en verwijdert alleen zijn eigen op identiteit en begrenzing gecontroleerde
+tempmap. De resultaten komen op stdout; echte projectmappen blijven ongemoeid.
+
 De [CLI-back-upfunctie](BACKUPS.md) en [herstelfunctie](RESTORE.md) staan los van
 HTTP. Het dashboard blijft alleen-lezen en heeft geen route om een back-up,
 herstel of andere schrijfactie te starten.
@@ -133,6 +138,34 @@ Zet geen secrets of persoonsgegevens in projectnamen of metadata: die namen
 komen in de browser. De scanner leest geen `.env` of gewone broncode-inhoud;
 de gecontroleerde `pyproject.toml` wordt wel als configuratie gelezen.
 Projectpaden en ruwe subprocessuitvoer worden niet via de API aangeboden.
+
+## Centrale logging en gevoelige gegevens
+
+`studio.py maintenance` gebruikt uitsluitend lokale, begrensde leescontroles van
+de studio zelf. De opdracht start geen Git, subprocessen, tests of netwerkverkeer
+en heeft geen schrijf- of reparatieopties. Onderzochte code wordt niet uitgevoerd.
+Zie [onderhoudscontrole](MAINTENANCE.md) voor het onderscheid tussen vaststellingen,
+aanbevelingen en niet-beoordeelde testdekking.
+
+De studio gebruikt `studio_logging.py` voor vaste logcodes en Nederlandse
+meldingen. Deze gaan alleen naar **stderr**; resultaten en JSON blijven op
+**stdout**. De logger maakt geen logbestanden, gebruikt geen netwerk en verandert
+de algemene Python-loggingconfiguratie niet. Alleen een expliciete `--output`
+bij een rapportopdracht maakt een rapportbestand; dat is geen automatisch log.
+
+Logs bevatten geen ingevoerde argumentwaarden, ruwe exceptions, tracebacks,
+HTTP-verzoeken, bestandinhoud of subprocessuitvoer. Ook onbekende gebeurtenissen
+worden vervangen door een vaste melding. Onverwachte fouten geven een veilige
+melding en een foutcode. Bij rapportopdrachten blijft ook het foutrapport geldige
+JSON als je `--format json` kiest. Ongeldige CLI-argumenten geven exitcode 2 en
+gebruiksinformatie op stderr; er ontstaat dan geen JSON-rapport.
+
+Bij een fout kun je de gebeurteniscode delen, bijvoorbeeld `REPORT_WRITE_FAILED`,
+zonder de oorspronkelijke exception te delen. Functionele overzichten, paden
+bij back-ups/herstel en expliciet opgeslagen rapporten kunnen wel projectnamen
+of locaties bevatten. Zet daarom geen secrets of persoonsgegevens in namen of
+metadata en controleer rapporten voordat je ze deelt. Door zelf `2>` te gebruiken
+in PowerShell kun je stderr bewust bewaren; bescherm dat bestand dan zelf.
 
 ## Tests uitvoeren
 

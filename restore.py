@@ -16,6 +16,7 @@ import zipfile
 
 import backup
 import studio
+from studio_logging import log_event
 
 MAX_ARCHIVE_BYTES = 128 * 1024 * 1024
 MAX_CENTRAL_BYTES = 2 * 1024 * 1024
@@ -351,8 +352,6 @@ def run(archive: Path, output: Path, create: bool):
     except (KeyboardInterrupt, EOFError):
         studio.print_output("Herstel geannuleerd. Na de start kan een ONVOLLEDIGE nieuwe map achterblijven; niets automatisch verwijderd.")
         return 130
-    except (OSError, ValueError, RecursionError, RuntimeError, zipfile.BadZipFile, NotImplementedError) as error:
-        detail = str(error) if isinstance(error, RestoreError) else "Archief, controlesommen of lokale paden zijn ongeldig/onveilig; controleer ook limieten en schrijfrechten."
-        studio.print_output("Herstel geweigerd of mislukt: " + studio.terminal_text(detail), file=sys.stderr)
-        studio.print_output("Als een nieuwe doelmap is aangemaakt, behandel die als ONVOLLEDIG. Bestaande bestanden worden niet overschreven; niets automatisch verwijderd.", file=sys.stderr)
+    except Exception:
+        log_event("RESTORE_FAILED")
         return 1

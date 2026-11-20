@@ -192,7 +192,7 @@ class BackupTests(unittest.TestCase):
         before = self.snapshot()
         isolated = self.base / "Studio"
         isolated.mkdir()
-        for name in ("studio.py", "backup.py", "process_runner.py"):
+        for name in ("studio.py", "backup.py", "process_runner.py", "studio_logging.py"):
             (isolated / name).write_bytes((Path(studio.__file__).parent / name).read_bytes())
         studio_before = {p.name: (p.read_bytes(), p.stat().st_mtime_ns) for p in isolated.iterdir()}
         env = dict(os.environ)

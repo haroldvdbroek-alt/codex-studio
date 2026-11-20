@@ -11,6 +11,8 @@ hebben. Er wordt geen releasegeschiedenis of studio-releaseversie verzonnen.
 - Quality-controles met optionele tests en veilige tekst-, JSON- en Markdownrapporten.
 - PowerShell-script voor een handmatig door de gebruiker in te richten Windows-taak.
 - Lokale releasevoorcontrole met expliciet openstaande handmatige externe controles.
+- Alleen-lezen maintenance-controle met aparte vaststellingen en aanbevelingen;
+  testdekking wordt niet uit het bestaan van testbestanden afgeleid.
 
 Web-, AI- en automation-templatebronnen ontbreken op deze branch en zijn gepland;
 een manifestvermelding bewijst geen beschikbare generator of complete template.

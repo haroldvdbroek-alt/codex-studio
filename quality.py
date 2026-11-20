@@ -18,13 +18,14 @@ STUDIO_ROOT = Path(__file__).absolute().parent
 MAX_ITEMS = 4000
 MAX_LINKS = 500
 STATIC_SECONDS = 30
-REQUIRED = ("AGENTS.md", "README.md", "studio.py", "create_project.py", "process_runner.py",
+REQUIRED = ("AGENTS.md", "README.md", "studio.py", "create_project.py", "process_runner.py", "studio_logging.py",
             "dashboard.py", "dashboard/index.html", "dashboard/style.css", "dashboard/app.js",
             "backup.py", "restore.py", "quality.py", "reporting.py", "templates/manifest.json",
             "docs/WORKFLOW.md", "docs/PROJECT_CHECKLIST.md", "docs/SECURITY.md",
             "docs/BACKUPS.md", "docs/RESTORE.md", "docs/QUALITY.md",
             "scripts/run-quality.ps1", "docs/TASK_SCHEDULER.md", "release_check.py",
-            "CHANGELOG.md", "docs/RELEASE.md")
+            "CHANGELOG.md", "docs/RELEASE.md", "benchmark.py", "docs/BENCHMARK.md",
+            "maintenance.py", "docs/MAINTENANCE.md")
 PLANNED = {"web", "ai", "automation"}
 
 

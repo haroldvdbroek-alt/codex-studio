@@ -10,6 +10,7 @@ import sys
 
 import backup
 import studio
+from studio_logging import log_event
 
 STATUSES = ("PASS", "WARN", "FAIL", "SKIP")
 FORMATS = {"text": ".txt", "json": ".json", "markdown": ".md"}
@@ -41,6 +42,39 @@ class ReleaseInfo:
 
 
 @dataclass(frozen=True)
+class Timing:
+    operation: str
+    projects: int
+    samples_ms: tuple[float, ...]
+    min_ms: float
+    median_ms: float
+    mean_ms: float
+    max_ms: float
+    projects_per_second: float | None
+
+    def as_dict(self):
+        return {"operation": self.operation, "projects": self.projects, "samples_ms": list(self.samples_ms),
+                "min_ms": self.min_ms, "median_ms": self.median_ms, "mean_ms": self.mean_ms,
+                "max_ms": self.max_ms, "projects_per_second": self.projects_per_second}
+
+
+@dataclass(frozen=True)
+class BenchmarkInfo:
+    projects: int
+    repeat: int
+    project_types: tuple[tuple[str, int], ...]
+    timings: tuple[Timing, ...]
+    dataset_unchanged: bool
+    temporary_files_removed: bool
+
+    def as_dict(self):
+        return {"projects": self.projects, "repeat": self.repeat, "warmup_runs": 1,
+                "project_types": dict(self.project_types), "timings": [item.as_dict() for item in self.timings],
+                "dataset_unchanged": self.dataset_unchanged, "temporary_files_removed": self.temporary_files_removed,
+                "scope": "synthetic_temporary_projects", "project_tests_executed": False}
+
+
+@dataclass(frozen=True)
 class Report:
     results: tuple
     tests_requested: bool
@@ -48,6 +82,7 @@ class Report:
     exit_code: int
     command: str = "quality"
     release: ReleaseInfo | None = None
+    benchmark: BenchmarkInfo | None = None
 
     @property
     def summary(self):
@@ -61,10 +96,12 @@ class Report:
                             for item in self.results]}
         if self.release is not None:
             data["release"] = self.release.as_dict()
+        if self.benchmark is not None:
+            data["benchmark"] = self.benchmark.as_dict()
         return data
 
 
-def build(results, tests_requested=False, *, completion="complete", exit_code=None, command="quality", release=None):
+def build(results, tests_requested=False, *, completion="complete", exit_code=None, command="quality", release=None, benchmark=None):
     if completion not in {"complete", "error", "cancelled"}:
         raise ValueError("Ongeldige rapportstatus.")
     items = []
@@ -74,9 +111,9 @@ def build(results, tests_requested=False, *, completion="complete", exit_code=No
         items.append(studio.CheckResult(item.status, studio.terminal_text(item.label),
                                        studio.terminal_text(item.message)))
     code = int(any(item.status == "FAIL" for item in items)) if exit_code is None else exit_code
-    if code not in {0, 1, 3, 4, 130} or command not in {"quality", "release-check"}:
+    if code not in {0, 1, 3, 4, 130} or command not in {"quality", "release-check", "benchmark", "maintenance"}:
         raise ValueError("Ongeldige rapport-exitcode.")
-    return Report(tuple(items), bool(tests_requested), completion, code, command, release)
+    return Report(tuple(items), bool(tests_requested), completion, code, command, release, benchmark)
 
 
 def markdown_cell(value):
@@ -101,9 +138,16 @@ def render(report, output_format):
                           "Lokale commit: " + (info["commit"] or "onbekend"),
                           "NIET GEPUBLICEERD. Geen externe controle of publicatiegoedkeuring afgegeven."])
             lines.extend(f"{item['status']} {item['label']}: {item['message']}" for item in info["manual_checks"])
+        if report.benchmark is not None:
+            info = report.benchmark
+            lines.append(f"Benchmark: {info.projects} fictieve projecten; {info.repeat} metingen per onderdeel; 1 opwarmronde.")
+            lines.append("Projecttypes: " + ", ".join(f"{kind}={count}" for kind, count in info.project_types))
+            for timing in info.timings:
+                lines.append(f"{timing.operation}: min {timing.min_ms:.3f} ms; mediaan {timing.median_ms:.3f} ms; gemiddeld {timing.mean_ms:.3f} ms; max {timing.max_ms:.3f} ms; projecten/s {timing.projects_per_second}.")
+            lines.append(f"Dataset ongewijzigd: {info.dataset_unchanged}; tijdelijke bestanden verwijderd: {info.temporary_files_removed}.")
         return "\n".join(lines) + "\n"
     if output_format == "markdown":
-        title = "Qualityrapport" if report.command == "quality" else "Lokale releasecontrole"
+        title = {"quality": "Qualityrapport", "release-check": "Lokale releasecontrole", "benchmark": "Lokale benchmark", "maintenance": "Alleen-lezen onderhoudscontrole"}[report.command]
         lines = ["# " + title, "", "Schema: 1; opdracht: " + report.command + ".", "", metadata, "",
                  "Samenvatting: " + counts, "", "| Status | Controle | Resultaat |", "| --- | --- | --- |"]
         lines.extend("| " + " | ".join(markdown_cell(value) for value in
@@ -118,6 +162,15 @@ def render(report, output_format):
                           "| Status | Externe controle | Zelf verifiëren |", "| --- | --- | --- |"])
             lines.extend("| " + " | ".join(markdown_cell(value) for value in
                          (item["status"], item["label"], item["message"])) + " |" for item in info["manual_checks"])
+        if report.benchmark is not None:
+            info = report.benchmark
+            lines.extend(["", f"{info.projects} fictieve projecten; {info.repeat} metingen per onderdeel; 1 opwarmronde.", "",
+                          "Projecttypes: " + ", ".join(f"{kind}={count}" for kind, count in info.project_types), "",
+                          "| Onderdeel | Min ms | Mediaan ms | Gemiddeld ms | Max ms | Projecten/s |",
+                          "| --- | --- | --- | --- | --- | --- |"])
+            lines.extend("| " + " | ".join(markdown_cell(value) for value in (item.operation, item.min_ms,
+                         item.median_ms, item.mean_ms, item.max_ms, item.projects_per_second)) + " |" for item in info.timings)
+            lines.extend(["", f"Dataset ongewijzigd: {info.dataset_unchanged}; tijdelijke bestanden verwijderd: {info.temporary_files_removed}."])
         return "\n".join(lines) + "\n"
     raise ValueError("Onbekend rapportformaat.")
 
@@ -189,7 +242,7 @@ def save(destination, payload, output_format):
         except OSError:
             # Het eindrapport is al volledig gepubliceerd; geen foutieve exitcode
             # in een geldig rapport veroorzaken door alleen een opruimprobleem.
-            studio.print_output("Waarschuwing: rapport opgeslagen; eigen tijdelijk rapportbestand bleef achter.", file=sys.stderr)
+            log_event("REPORT_CLEANUP_FAILED")
 
 
 def run(collector, *, tests_requested=False, output_format="text", output=None, command="quality", release=None):
@@ -200,35 +253,50 @@ def run(collector, *, tests_requested=False, output_format="text", output=None, 
             raise ValueError("Ongeldig formaat.")
         if output is not None:
             destination = prepare_destination(output, output_format)
-    except (OSError, ValueError, RuntimeError):
+    except Exception:
+        log_event("REPORT_TARGET_INVALID")
         report = build([studio.CheckResult("FAIL", "Rapportbestand", "Rapportdoel ongeldig, bestaand of onveilig; kies een nieuwe lokale bestandsnaam met passende extensie en bestaande oudermap.")],
                        tests_requested, command=command, release=release, completion="error", exit_code=3)
     else:
-        report = collector()
+        try:
+            report = collector()
+        except KeyboardInterrupt:
+            log_event("COMMAND_CANCELLED")
+            report = build([studio.CheckResult("SKIP", "Uitvoering", "Geannuleerd; eventueel gestarte tests kunnen bestanden hebben gewijzigd.")],
+                           tests_requested, command=command, release=release, completion="cancelled", exit_code=130)
+        except Exception:
+            log_event("COMMAND_FAILED")
+            report = build([studio.CheckResult("FAIL", "Uitvoering", "Controle kon niet veilig worden afgerond; exceptiontekst en gevoelige context zijn weggelaten.")],
+                           tests_requested, command=command, release=release, completion="error", exit_code=1)
+    if report.summary["FAIL"]:
+        log_event("CHECKS_FAILED")
     def changed(items, completion, code):
         return build(items, tests_requested, command=report.command, release=report.release,
-                     completion=completion, exit_code=code)
+                     benchmark=report.benchmark, completion=completion, exit_code=code)
     try:
         payload = encoded(report, output_format)
-    except (ValueError, RecursionError):
+    except Exception:
+        log_event("REPORT_TOO_LARGE")
         report = changed([studio.CheckResult("FAIL", "Rapport", "Rapport overschrijdt een limiet of kon niet veilig worden opgebouwd; geen volledig rapport opgeslagen.")], "error", 3)
         destination = None
         payload = render(report, output_format if output_format in FORMATS else "text").encode("utf-8")
     if destination is not None and report.exit_code != 130:
         try:
             save(destination, payload, output_format)
-            studio.print_output("Rapport opgeslagen: " + studio.terminal_text(str(destination.path)), file=sys.stderr)
+            log_event("REPORT_SAVED")
         except KeyboardInterrupt:
+            log_event("REPORT_CANCELLED")
             report = changed([*report.results, studio.CheckResult("SKIP", "Rapportbestand", "Opslaan onderbroken; eventueel tijdelijk .incomplete-bestand blijft achter.")], "cancelled", 130)
             payload = render(report, output_format).encode("utf-8")
-        except (OSError, ValueError, RuntimeError):
+        except Exception:
+            log_event("REPORT_WRITE_FAILED")
             report = changed([*report.results, studio.CheckResult("FAIL", "Rapportbestand", "Rapport niet veilig opgeslagen; geen bestaand bestand overschreven. Eventueel eigen .incomplete-bestand blijft achter.")], "error", 3)
             payload = render(report, output_format).encode("utf-8")
     elif destination is not None:
-        studio.print_output("Geen rapportbestand aangemaakt wegens annuleren.", file=sys.stderr)
+        log_event("REPORT_CANCELLED")
     try:
         studio.print_output(payload.decode("utf-8").rstrip("\n"))
-    except (OSError, ValueError):
-        studio.print_output("Rapport kon niet naar stdout worden geschreven.", file=sys.stderr)
+    except Exception:
+        log_event("STDOUT_FAILED")
         return 3
     return report.exit_code

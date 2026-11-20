@@ -66,7 +66,7 @@ class APITests(unittest.TestCase):
         for route in ("/", "/static/app.js", "/static/style.css"):
             self.assertEqual(self.request(route)[0], 200)
         for route in ("/static/../studio.py", "/static/%2e%2e/studio.py", "/static/", "/.env",
-                      "/api/projects?root=C:/", "/api/tests", "/api/backup", "/api/restore", "/api/quality", "/api/release-check", "/api/projects/../check",
+                      "/api/projects?root=C:/", "/api/tests", "/api/backup", "/api/restore", "/api/quality", "/api/release-check", "/api/benchmark", "/api/projects/../check",
                       "/static/%252e%252e/studio.py", "/static\\..\\studio.py"):
             with self.subTest(route=route):
                 self.assertEqual(self.request(route)[0], 404)
